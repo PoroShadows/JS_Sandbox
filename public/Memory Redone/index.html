@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script defer src="card.js"></script>
+    <script defer src="board.js"></script>
+    <title>Memory Redone</title>
+    <style>
+        body {
+            display: flex;
+        }
+
+        memory-board {
+            width: 600px;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            display: -webkit-box;
+            display: -moz-box;
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-flow: row wrap;
+            justify-content: space-around;
+        }
+
+        memory-card {
+            height: 150px;
+            width: 150px;
+            margin: .6125rem .3125rem .3125rem;
+        }
+
+        .player-list {
+            list-style: none;
+            display: -webkit-box;
+            display: -moz-box;
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: inline-flex;
+            -webkit-flex-flow: column wrap;
+            justify-content: space-around;
+            margin: 1rem;
+            border: 0;
+            padding: 0;
+        }
+
+        .player-list > li {
+            width: 200px;
+            height: 40px;
+            margin: .3125rem;
+            border: 1px solid black;
+            border-radius: .3125rem;
+        }
+
+        .player-draggable {
+            width: 100%;
+            height: 100%;
+        }
+
+        .name-edit {
+            top: 0;
+            left: 0;
+            float: right;
+        }
+
+        .new-player-name {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<memory-board></memory-board>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+    <% include templates/head.ejs %>
+    <title>Kano Official page replica</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Comfortaa">
+    <link rel="stylesheet" href="/styles/kano.css">
+</head>
+<body>
+<a href="/kano" id="top">
+    <p class="artist_name">KANO</p>
+    <p>Warner Bros. Home Entertainment</p>
+</a>
+<img id="artist-logo" src="http://whv-amusic.com/kano/core_sys/images/main/artist_logo.png">
+<nav>
+    <ul class="links">
+        <li><a class="active" href="/kano">Home</a></li>
+        <li><a href="/kano/news">News & Topics</a></li>
+        <li><a href="/kano/movie">Movie</a></li>
+        <li><a href="/kano/biography">Biography</a></li>
+        <li><a href="/kano/discography">Discography</a></li>
+        <li><a href="/kano/live_event">Live & Event</a></li>
+    </ul>
+</nav>
+<h2 id="news-info">News & Information</h2>
+<ul class="news-info">
+    <% for (var i = 0; i < newsInfo.length; i++) { %>
+    <li><%= newsInfo[i].date %><a href="/kano/newsinfo/<%= newsInfo[i].id %>"><%= newsInfo[i].preview %></a></li>
+    <% } %>
+</ul>
+<h2 id="live-event">Live & Event</h2>
+<ul class="live-event">
+    <% for (var i = 0; i < liveEvent.length; i++) { %>
+    <li><%= liveEvent[i].date %><a href="/kano/newsinfo/<%= liveEvent[i].id %>"><%= liveEvent[i].preview %></a></li>
+    <% } %>
+</ul>
+</body>
+</html>
