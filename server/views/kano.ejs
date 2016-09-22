@@ -7,11 +7,12 @@
     <link rel="stylesheet" href="/styles/kano.css">
 </head>
 <body>
-<a href="/kano" id="top">
+<img class="cover" src="/images/kano_main_bg03.jpg" alt="Artist cover">
+<a href="/kano" class="top">
     <p class="artist_name">KANO</p>
     <p>Warner Bros. Home Entertainment</p>
 </a>
-<img id="artist-logo" src="http://whv-amusic.com/kano/core_sys/images/main/artist_logo.png">
+<img class="artist-logo" src="/images/kano_artist_logo.png">
 <nav>
     <ul class="links">
         <li><a class="active" href="/kano">Home</a></li>
@@ -22,16 +23,16 @@
         <li><a href="/kano/live_event">Live & Event</a></li>
     </ul>
 </nav>
-<h2 id="news-info">News & Information</h2>
+<h2 class="news-info">News & Information</h2>
 <ul class="news-info">
     <% for (var i = 0; i < newsInfo.length; i++) { %>
-    <li><%= newsInfo[i].date %><a href="/kano/newsinfo/<%= newsInfo[i].id %>"><%= newsInfo[i].preview %></a></li>
+    <li class="item-<%= i+1%>"><span><%= newsInfo[i].date %></span><a href="/kano/newsinfo/<%= newsInfo[i].id %>"><%= newsInfo[i].preview %></a></li>
     <% } %>
 </ul>
-<h2 id="live-event">Live & Event</h2>
+<h2 class="live-event">Live & Event</h2>
 <ul class="live-event">
     <% for (var i = 0; i < liveEvent.length; i++) { %>
-    <li><%= liveEvent[i].date %><a href="/kano/newsinfo/<%= liveEvent[i].id %>"><%= liveEvent[i].preview %></a></li>
+    <li class="item-<%= i+1%>"><%= liveEvent[i].date %><a href="/kano/newsinfo/<%= liveEvent[i].id %>"><%= liveEvent[i].preview %></a></li>
     <% } %>
 </ul>
 </body>

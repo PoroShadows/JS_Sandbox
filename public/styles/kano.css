@@ -4,6 +4,8 @@
 html,
 body {
   margin: 0;
+  padding: 0;
+  border: 0;
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -11,10 +13,20 @@ body {
 body {
   font: 12px/14px 'Comfortaa', Meiryo, sans-serif;
   color: #522b16;
-  background: url("http://whv-amusic.com/kano/core_sys/images/main/main_bg/main_bg03.jpg") no-repeat center;
-  background-size: cover;
 }
-#top {
+img.cover {
+  display: inline;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  max-width: 200%;
+  min-height: 100%;
+  max-height: 200%;
+  transform: translate(-50%, -50%);
+  z-index: -1000;
+}
+a.top {
   display: inline-flex;
   top: 0;
   left: 0;
@@ -22,19 +34,19 @@ body {
   color: #522b16;
   text-decoration: none;
 }
-#top:link {
+a.top:link {
   text-decoration: none;
 }
-#top > p {
+a.top > p {
   margin: 0;
   padding: 8px;
 }
-#top > .artist_name {
+a.top > .artist_name {
   background: rgba(255,255,255,0.6);
 }
-#artist-logo {
+img.artist-logo {
   display: block;
-  margin: 50px 0 60px 40px;
+  margin: 23px 0 63px 40px;
 }
 nav > ul.links {
   margin: 0;
@@ -42,29 +54,258 @@ nav > ul.links {
   list-style: none;
 }
 nav > ul.links > li {
-  margin: 2px 0;
+  margin: 3px 0;
 }
 nav > ul.links > li > a {
+  contain: layout style;
   display: inline-block;
   font-size: 14px;
   color: #fff;
-  padding: 4px 10px 3px 30px;
+  padding: 4px 10px 3px 50px;
   background: rgba(136,151,88,0.4);
+  transform: translateX(-20px);
   text-decoration: none;
-  -webkit-transition: padding-left 0.5s ease;
-  -moz-transition: padding-left 0.5s ease;
-  -ms-transition: padding-left 0.5s ease;
-  -o-transition: padding-left 0.5s ease;
-  transition: padding-left 0.5s ease;
+  -webkit-transition: transform 0.4s ease;
+  -moz-transition: transform 0.4s ease;
+  -ms-transition: transform 0.4s ease;
+  -o-transition: transform 0.4s ease;
+  transition: transform 0.4s ease;
 }
 nav > ul.links > li > a.active {
   background: rgba(66,32,0,0.8);
 }
 nav > ul.links > li > a:hover {
-  padding-left: 50px;
+  transform: none;
 }
-#news-info,
-#live-event {
+h2.news-info {
+  font: 15.6px 'Comfortaa', Meiryo, sans-serif;
   margin: 0;
+  margin-top: 23px;
   padding-left: 30px;
+}
+ul.news-info {
+  list-style: none;
+  margin: inherit 0 0 0;
+  padding: 0;
+}
+ul.news-info > li.item-1 {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.8);
+  padding: 3px 2px 3px 30px;
+  margin-bottom: 3px;
+  max-width: 500px;
+  width: auto;
+  -webkit-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -moz-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -ms-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -o-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  margin-right: 1000px;
+}
+ul.news-info > li.item-1 > a,
+ul.news-info > li.item-1 > a:link {
+  color: #000;
+  text-decoration: none;
+  -webkit-transition: color 0.1s ease-in;
+  -moz-transition: color 0.1s ease-in;
+  -ms-transition: color 0.1s ease-in;
+  -o-transition: color 0.1s ease-in;
+  transition: color 0.1s ease-in;
+}
+ul.news-info > li.item-1:hover > a {
+  color: #fff;
+}
+ul.news-info > li.item-1:hover {
+  color: #fff;
+  background-color: #8f3a4a;
+}
+ul.news-info > li.item-1 > span {
+  margin-right: 10px;
+}
+ul.news-info > li.item-2 {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.6);
+  padding: 3px 2px 3px 30px;
+  margin-bottom: 3px;
+  max-width: 500px;
+  width: auto;
+  -webkit-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -moz-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -ms-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -o-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  margin-right: 1000px;
+}
+ul.news-info > li.item-2 > a,
+ul.news-info > li.item-2 > a:link {
+  color: #000;
+  text-decoration: none;
+  -webkit-transition: color 0.1s ease-in;
+  -moz-transition: color 0.1s ease-in;
+  -ms-transition: color 0.1s ease-in;
+  -o-transition: color 0.1s ease-in;
+  transition: color 0.1s ease-in;
+}
+ul.news-info > li.item-2:hover > a {
+  color: #fff;
+}
+ul.news-info > li.item-2:hover {
+  color: #fff;
+  background-color: #8f3a4a;
+}
+ul.news-info > li.item-2 > span {
+  margin-right: 10px;
+}
+ul.news-info > li.item-3 {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.4);
+  padding: 3px 2px 3px 30px;
+  margin-bottom: 3px;
+  max-width: 500px;
+  width: auto;
+  -webkit-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -moz-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -ms-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -o-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  margin-right: 1000px;
+}
+ul.news-info > li.item-3 > a,
+ul.news-info > li.item-3 > a:link {
+  color: #000;
+  text-decoration: none;
+  -webkit-transition: color 0.1s ease-in;
+  -moz-transition: color 0.1s ease-in;
+  -ms-transition: color 0.1s ease-in;
+  -o-transition: color 0.1s ease-in;
+  transition: color 0.1s ease-in;
+}
+ul.news-info > li.item-3:hover > a {
+  color: #fff;
+}
+ul.news-info > li.item-3:hover {
+  color: #fff;
+  background-color: #8f3a4a;
+}
+ul.news-info > li.item-3 > span {
+  margin-right: 10px;
+}
+h2.live-event {
+  font: 15.6px 'Comfortaa', Meiryo, sans-serif;
+  margin: 0;
+  margin-top: 23px;
+  padding-left: 30px;
+}
+ul.live-event {
+  list-style: none;
+  margin: inherit 0 0 0;
+  padding: 0;
+}
+ul.live-event > li.item-1 {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.8);
+  padding: 3px 2px 3px 30px;
+  margin-bottom: 3px;
+  max-width: 500px;
+  width: auto;
+  -webkit-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -moz-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -ms-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -o-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  margin-right: 1000px;
+}
+ul.live-event > li.item-1 > a,
+ul.live-event > li.item-1 > a:link {
+  color: #000;
+  text-decoration: none;
+  -webkit-transition: color 0.1s ease-in;
+  -moz-transition: color 0.1s ease-in;
+  -ms-transition: color 0.1s ease-in;
+  -o-transition: color 0.1s ease-in;
+  transition: color 0.1s ease-in;
+}
+ul.live-event > li.item-1:hover > a {
+  color: #fff;
+}
+ul.live-event > li.item-1:hover {
+  color: #fff;
+  background-color: #8f3a4a;
+}
+ul.live-event > li.item-1 > span {
+  margin-right: 10px;
+}
+ul.live-event > li.item-2 {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.6);
+  padding: 3px 2px 3px 30px;
+  margin-bottom: 3px;
+  max-width: 500px;
+  width: auto;
+  -webkit-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -moz-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -ms-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -o-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  margin-right: 1000px;
+}
+ul.live-event > li.item-2 > a,
+ul.live-event > li.item-2 > a:link {
+  color: #000;
+  text-decoration: none;
+  -webkit-transition: color 0.1s ease-in;
+  -moz-transition: color 0.1s ease-in;
+  -ms-transition: color 0.1s ease-in;
+  -o-transition: color 0.1s ease-in;
+  transition: color 0.1s ease-in;
+}
+ul.live-event > li.item-2:hover > a {
+  color: #fff;
+}
+ul.live-event > li.item-2:hover {
+  color: #fff;
+  background-color: #8f3a4a;
+}
+ul.live-event > li.item-2 > span {
+  margin-right: 10px;
+}
+ul.live-event > li.item-3 {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.4);
+  padding: 3px 2px 3px 30px;
+  margin-bottom: 3px;
+  max-width: 500px;
+  width: auto;
+  -webkit-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -moz-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -ms-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  -o-transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  transition: color 0.5s ease-in, background-color 0.5s ease-in;
+  margin-right: 1000px;
+}
+ul.live-event > li.item-3 > a,
+ul.live-event > li.item-3 > a:link {
+  color: #000;
+  text-decoration: none;
+  -webkit-transition: color 0.1s ease-in;
+  -moz-transition: color 0.1s ease-in;
+  -ms-transition: color 0.1s ease-in;
+  -o-transition: color 0.1s ease-in;
+  transition: color 0.1s ease-in;
+}
+ul.live-event > li.item-3:hover > a {
+  color: #fff;
+}
+ul.live-event > li.item-3:hover {
+  color: #fff;
+  background-color: #8f3a4a;
+}
+ul.live-event > li.item-3 > span {
+  margin-right: 10px;
 }

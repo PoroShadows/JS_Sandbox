@@ -12,9 +12,9 @@ module.exports = exports = function (app) {
     app.get('/kano', function (req, res) {
         res.render('kano', {
             newsInfo: [
-                { id: 45, date: "2016/8/19", preview: "全国のJOYSOUND MAX、JOYSOUND f1 でミュージックビデオをバックに歌唱開始" },
-                { id: 44, date: "2016/8/12", preview: "「nameless」MUSIC VIDEO解禁" },
-                { id: 43, date: "2016/8/12", preview: "「nameless」ジャケット写真公開" }
+                { id: 45, date: "2016/8/19", preview: "Newシングル「nameless」発売記念 ツイキャス特番 9月8日21時から放送決定　※9/6更新" },
+                { id: 44, date: "2016/8/12", preview: "animelo mixで「nameless」先行配信開始" },
+                { id: 43, date: "2016/8/12", preview: "「RERE」MUSIC VIDEO解禁" }
             ],
             liveEvent: [
                 { id: 67, date: "2016/8/12", preview: "New Single「nameless」発売記念 特典お渡し会 開催決定" },
