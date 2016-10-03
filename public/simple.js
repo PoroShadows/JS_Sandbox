@@ -8,7 +8,7 @@ function extend(key, fn) {
         Object.defineProperty(this, name, Object.getOwnPropertyDescriptor(obj, name));
 }
 var simple = function (selector, other) {
-        return new simple.prototype.init(selector, other);
+        return new simple.prototype.init(select, other);
     },
     /**
      * @type {HTMLDocument}
@@ -50,13 +50,13 @@ function htmlTagAttrTest(attrs, key, value) {
     return key;
 }
 var init = simple.prototype.init = function (selector, other) {
-    if (!selector) return this;
-    if (typeof selector === 'string') {
-        if (/^<.*>$/.test(selector)) {
-            if (/\s+/g.test(selector)) {
-                selector = selector.replace(/^<|>$/g, '');
-                var attributes = selector.split(/\s/), attrs = {}, key = '';
-                selector = attributes.splice(0, 1)[0];
+    if (!select) return this;
+    if (typeof select === 'string') {
+        if (/^<.*>$/.test(select)) {
+            if (/\s+/g.test(select)) {
+                select = select.replace(/^<|>$/g, '');
+                var attributes = select.split(/\s/), attrs = {}, key = '';
+                select = attributes.splice(0, 1)[0];
                 if (!/^(\s?)+$/.test(attributes.join(' '))) simple.each(attributes, function (item) {
                     key = htmlTagAttrTest(
                         attrs,
@@ -64,16 +64,16 @@ var init = simple.prototype.init = function (selector, other) {
                         key ? item : Array.isArray(item) ? item.join('=').replace(/^"|^'/g, '') : ''
                     );
                 });
-                this[this.length++] = doc.createElement(selector);
+                this[this.length++] = doc.createElement(select);
                 this.attr(attrs);
                 if (other) this.appendTo(other);
             } else {
-                this[this.length++] = doc.createElement(selector.replace(/^<|>$/g, ''));
+                this[this.length++] = doc.createElement(select.replace(/^<|>$/g, ''));
                 if (other) this.attr(other);
             }
         } else {
             var context = other ? other.constructor.name === 'simple' ? other[0] : other : doc;
-            var list = context.querySelectorAll(selector);
+            var list = context.querySelectorAll(select);
             for (var i = 0; i < list.length; i++) this[this.length++] = list[i];
         }
     }
@@ -253,7 +253,7 @@ simple.prototype.extend({
         return this;
     },
     /**
-     * Append one or more elements.
+     * Append one or more __elements.
      *
      * @param {Element} children - The new child or children
      * @returns {Element} This element
@@ -504,11 +504,11 @@ function fetchUrl(url, options) {
     if (window.fetch) {
         return window.fetch(url, options);
     } else {
-        var promise = new Promise()
+        var promise = new WaterStream()
     }
 }
 function ajax(method, url, args) {
-    var promise = new Promise(function (resolve, reject) {
+    var promise = new WaterStream(function (resolve, reject) {
         var xhr = new XMLHttpRequest();
         var pars = '';
 

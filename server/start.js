@@ -12,7 +12,6 @@ var server = https.createServer({
 }, app).listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
-
 /**
  * Normalize a port into a number, string, or false.
  *
@@ -24,7 +23,7 @@ function normalizePort(val) {
     // If 'val' is a pipe
     return isNaN(port) ? val :
         // If 'port' is a valid port
-        port >= 0 && port <= 65535 ? port :
+        port >= 0x0000 && port <= 0xffff ? port :
         // 'val' is not a valid value
         false;
 }

@@ -10,6 +10,15 @@
     <title>Sandbox</title>
 </head>
 <body>
-
+<script src="/jscripts/WaterLily.js"></script>
+<script>
+    var body = WaterLily('body');
+    WaterStream.resolve(WaterLily('<test class="hi">', { id: 'dat-boi' }, 'testing...', 'oh a node')).then(function (element) {
+        console.log(body);
+        body.appendChild(element);
+        console.log(element);
+        return element;
+    });
+</script>
 </body>
 </html>

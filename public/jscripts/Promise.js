@@ -1,194 +1,260 @@
-
-
-function no_op() {
-}
-function Promise(executor) {
-    if (!instanceOf(this, Object)) {
-        throw new TypeError('Promises must be constructed via new');
-    }
-    if (!instanceOf(executor, Function))
-        throw new TypeError("'executor' is not a function");
-    this.__state = 0;
-    this.__next = null;
-    this.__chain = [];
-    if (executor === no_op) {
-        return;
-    }
-    doResolve(executor, this);
-}
-function doResolve(executor, promise) {
-
-}
-
-/*
-
- function Promise(executor) {
- if (typeof this !== "object") {
- throw new TypeError("Promises must be constructed via new");
- }
- if (typeof executor !== "function") {
- throw new TypeError("not a function");
- }
- this.__state = 0;
- this.__next = null;
- this.__chain = [];
- if (executor === noop) return;
- doResolve(executor, this);
- }
-
- function doResolve(fn, promise) {
- var done = false;
- var res = tryCall(fn, function(value) {
- if (done) return;
- done = true;
- resolve(promise, value);
- }, function(reason) {
- if (done) return;
- done = true;
- reject(promise, reason);
- });
- if (!done && res === isError) {
- done = true;
- reject(promise, error);
- }
- }
-
- var error = null;
- var isError = {};
-
- function tryCall(fn, args) {
- try {
- var funArgs = arguments.copyWithin(arguments.length, 1);
- return fn.apply(fn, funArgs);
- } catch (e) {
- error = e;
- return isError;
- }
- }
-
- Promise.prototype.then = function(onFulfilled, onRejected) {
- if (this.constructor !== Promise) {
- return safeThen(this, onFulfilled, onRejected);
- }
- var res = new Promise(noop);
- handle(this, { fulfilled: onFulfilled, rejected: onRejected, promise: res });
- return res;
- };
- function safeThen(self, onFulfilled, onRejected) {
- return new self.constructor(function(resolve, reject) {
- var res = new Promise(noop);
- res.then(resolve, reject);
- handle(self, { fulfilled: onFulfilled, rejected: onRejected, promise: res });
- });
- }
- function handle(self, deferred) {
- while (self.__state === 3) {
- self = self.__next;
- }
- if (self.__state === 0) {
- debugger;
- self.__chain.push(deferred);
- return;
- }
- (function() {
- var cb = self.__state === 1 ? deferred.fulfilled : deferred.rejected;
- if (cb === null) {
- if (self.__state === 1) {
- resolve(deferred.promise, self.__next);
- } else {
- reject(deferred.promise, self.__next);
- }
- return;
- }
- var ret = tryCall(cb, self.__next);
- if (ret === isError) {
- reject(deferred.promise, error);
- } else {
- resolve(deferred.promise, ret);
- }
- })();
- }
- Promise.resolve = function (newValue) {
- resolve(new Promise(function (resolve) {
- resolve(newValue);
- }), newValue)
- };
- function resolve(self, newValue) {
- if (newValue === self) {
- return reject(self, new TypeError("A promise cannot be resolved with itself."));
- }
- if (newValue && (typeof newValue === "object" || typeof newValue === "function")) {
- var then = tryCall(newValue);
- debugger;
- if (then === isError) {
- return reject(self, error);
- }
- if (then === self.then && newValue instanceof Promise) {
- self.__state = 3;
- self.__next = newValue;
- finale(self);
- return;
- } else if (typeof then === "function") {
- doResolve(then.bind(newValue), self);
- return;
- }
- }
- self.__state = 1;
- self.__next = newValue;
- finale(self);
- }
- function reject(self, newValue) {
- self.__state = 2;
- self.__next = newValue;
- finale(self);
- }
- function finale(self) {
- debugger;
- each(self.__chain, function (section) {
- handle(self, section)
- });
- self.__chain = null;
- }
+/**
+ * WaterStream polyfill
+ *
+ * @param {function(resolve, reject)} resolver
+ * @constructor
  */
+function Promise(resolver) {
+    var state = 'pending';
+    var value;
+    var deferred = null;
+    var spread = false;
 
-/*Promise.resolve(function () {
- console.log("first");
- return "second"
- }).then(function (str) {
- console.log(str);
- });*/
-
-// Make available in Object
-each([
-    'instanceOf',
-    'getOwnPropertyNames',
-    ['enumerableKeys', 'keys'],
-    ['defineProps', 'defineProperties'],
-    'create'
-], function (name) {
-    if (instanceOf(name, String)) {
-        if (!Object[name]) {
-            Object[name] = eval(name);
-        }
-    } else {
-        each(name.length, function (i) {
-            if (!Object[name[i]]) {
-                Object[name[i]] = eval(name[0]);
-            }
-        });
-    }
-});
-
-// Make available in node.js
-if (instanceOf(module, Object) && instanceOf(module.exports, Object))
-    module.exports = {
-        instanceOf: instanceOf,
-        each: each,
-        getOwnPropertyNames: getOwnPropertyNames,
-        enumerableKeys: enumerableKeys,
-        define: defineProps,
-        create: create
+    //noinspection JSUnusedGlobalSymbols
+    this.isFulfilled = function () {
+        return state == 'fulfilled'
+    };
+    //noinspection JSUnusedGlobalSymbols
+    this.isPending = function () {
+        return state == 'pending'
+    };
+    //noinspection JSUnusedGlobalSymbols
+    this.isRejected = function () {
+        return state == 'fulfilled'
+    };
+    //noinspection JSUnusedGlobalSymbols
+    this.isResolved = function () {
+        return state == 'resolved'
     };
 
-// Test section
+    function resolve(newValue) {
+        try {
+            if (newValue && typeof newValue.then === 'function') {
+                newValue.then(resolve, reject);
+                return;
+            }
+            state = 'resolved';
+            value = newValue;
 
+            if (deferred) {
+                handle(deferred);
+            }
+        } catch (e) {
+            reject(e);
+        }
+    }
+    function reject(reason) {
+        state = 'rejected';
+        value = reason;
+
+        if (deferred) {
+            handle(deferred);
+        }
+    }
+    function handle(handler) {
+        if (state === 'pending') {
+            deferred = handler;
+            return;
+        }
+        setTimeout(function () {
+            var handlerCallback = state === 'resolved' ? handler.onResolved : handler.onRejected;
+
+            if (!handlerCallback) {
+                handler[state === 'resolved' ? 'resolve' : 'reject'](value);
+                return;
+            }
+
+            var ret;
+            try {
+                ret = handlerCallback(value);
+                if (spread)
+                    handler.resolve.apply(this, ret);
+                else handler.resolve(ret);
+                spread = false;
+            } catch (e) {
+                handler.reject(e);
+            }
+            state = 'fulfilled';
+        }, 1);
+    }
+
+    /**
+     * Resolve what to do with the value
+     *
+     * @param {function(value)} [onResolved]
+     * @param {function(reason)} [onRejected]
+     * @returns {Promise}
+     * @public
+     */
+    this.then = function (onResolved, onRejected) {
+        return new Promise(function (resolve, reject) {
+            handle({
+                onResolved: onResolved,
+                onRejected: onRejected,
+                resolve: resolve,
+                reject: reject
+            });
+        });
+    };
+    //noinspection JSUnusedGlobalSymbols
+    /**
+     * Not standard do not expect this to work in other
+     * promise libraries
+     *
+     * Ensure error catch handles by the onRejected function
+     *
+     * @param {function(value)} [onResolved]
+     * @param {function(reason)} [onRejected]
+     * @returns {Promise}
+     * @public
+     */
+    this.done = function (onResolved, onRejected) {
+        return new Promise(function (resolve, reject) {
+            handle({
+                onResolved: onResolved,
+                onRejected: onRejected,
+                resolve: resolve,
+                reject: function reject(reason) {
+                    state = 'resolved';
+                    value = reason;
+                    handle({
+                        onResolved: onRejected,
+                        resolve: resolve
+                    });
+                }
+            });
+        });
+    };
+    /**
+     * Can be useful for error handling in your promise
+     * composition.
+     *
+     * @param {function(reason)} [onRejected]
+     * @returns {Promise}
+     * @public
+     */
+    this.catch = function (onRejected) {
+        return new Promise(function (resolve, reject) {
+            handle({
+                onResolved: undefined,
+                onRejected: onRejected,
+                resolve: resolve,
+                reject: reject
+            });
+        });
+    };
+    //noinspection JSUnusedGlobalSymbols
+    /**
+     * If value is an array spread the arguments.
+     * Else nothing function as normal then
+     *
+     * @param {function(value)} [onResolved]
+     * @param {function(reason)} [onRejected]
+     * @returns {Promise}
+     * @public
+     */
+    this.spread = function (onResolved, onRejected) {
+        spread = true;
+        return this.then(onResolved, onRejected);
+    };
+
+    resolver(resolve, reject);
+}
+/**
+ * WaterStream.all passes an array of values from
+ * all the promises in the iterable object that it was
+ * passed. The array of values maintains the order of the
+ * original iterable object, not the order that the
+ * promises were resolved in. If something passed in the
+ * iterable array is not a promise, it's converted to one
+ * by {@see WaterStream.resolve}.
+ *
+ * If any of the passed in promises rejects, the all
+ * WaterStream immediately rejects with the value of the
+ * promise that rejected, discarding all the other promises
+ * whether or not they have resolved. If an empty array is
+ * passed, then this method resolves immediately.
+ *
+ * @param {Array<WaterStream|*>} iterable - An iterable object
+ * @returns {WaterStream}
+ * @since 1.0
+ * @public
+ * @static
+ */
+Promise.all = function (iterable) {
+    if (!iterable || iterable.length == 0)
+        return Promise.resolve();
+    var values = [];
+    iterable = iterable.map(function (item) {
+        return item && typeof item.then === 'function' ? item : Promise.resolve(item);
+    });
+    return new Promise(function (resolve, reject) {
+        each(iterable, function (item, idx) {
+            item.then(function (value) {
+                values[idx] = value;
+                if (values.length == iterable.length)
+                    resolve(values);
+            }, reject);
+        });
+    });
+};
+/**
+ * The race function returns a WaterStream that is settled
+ * the same way as the first passed promise to settle.
+ * It resolves or rejects, whichever happens first.
+ *
+ * @param {Array.<WaterStream>} iterable
+ * @returns {WaterStream}
+ * @since 1.0
+ * @public
+ * @static
+ */
+Promise.race = function (iterable) {
+    var calls = 0;
+    return new Promise(function (resolve, reject) {
+        each(iterable, function (item) {
+            item.then(function (value) {
+                if (calls < 1) {
+                    ++calls;
+                    resolve(value);
+                }
+            }, function (value) {
+                if (calls < 1) {
+                    ++calls;
+                    reject(value);
+                }
+            });
+        });
+    });
+};
+/**
+ * Returns a WaterStream that is rejected. For debugging purposes
+ * and selective error catching, it is useful to make reason
+ * an instanceof {@see Error}.
+ *
+ * @param {Error|String} [reason]
+ * @returns {WaterStream}
+ * @since 1.0
+ * @public
+ * @static
+ */
+Promise.reject = function (reason) {
+    return new Promise(function (resolve, reject) {
+        reject(reason);
+    });
+};
+/**
+ * Returns a WaterStream that is resolved.
+ *
+ * @param {T|WaterStream} [value]
+ * @returns {WaterStream}
+ * @template T
+ * @since 1.0
+ * @public
+ * @static
+ */
+Promise.resolve = function (value) {
+    return new Promise(function (resolve) {
+        resolve(value);
+    });
+};

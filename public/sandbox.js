@@ -120,7 +120,7 @@ let parseBoolean = value => value == 'true' ? true : value == 'false' ? false : 
  * @returns {Element | NodeList | Element}
  */
 let $ = (selector, attributes, css) => {
-    if (selector instanceof Function) return document.addEventListener('DOMContentLoaded', selector);
+    if (select instanceof Function) return document.addEventListener('DOMContentLoaded', select);
     /** @type {Element | NodeList | Element} */
     let element;
     function setAttr(lastKey, attrs, value, insideAttr) {
@@ -129,14 +129,14 @@ let $ = (selector, attributes, css) => {
         attrs[lastKey] = (insideAttr ? attrs[lastKey] + ' ' : '') + value.substr(firstIndex, value.length - lastIndex - (insideAttr ? 0 : 1));
         return lastIndex == 1 ? false : firstIndex == 1 ? true : insideAttr;
     }
-    if (selector.includes('<') && selector.includes('>')) {
-        if (selector.includes(' ')) {
-            selector = selector.substr(1, selector.length - 2);
+    if (select.includes('<') && select.includes('>')) {
+        if (select.includes(' ')) {
+            select = select.substr(1, select.length - 2);
             let type = '';
             let insideAttr = false;
             let attrs = {};
             /** @type {string[]} */
-            let values = selector.split('=');
+            let values = select.split('=');
             let lastKey = '';
             for (let i = 0; i < values.length; i++) {
                 /** @type {string[]} */
@@ -151,14 +151,14 @@ let $ = (selector, attributes, css) => {
             element = document.createElement(type);
             element.attr(attrs);
         } else {
-            element = document.createElement(selector.replace('<', '').replace('>', ''));
+            element = document.createElement(select.replace('<', '').replace('>', ''));
             if (attributes) element.attr(attributes);
             if (css) element.css(css);
         }
     } else {
-        let nodeList = document.querySelectorAll(selector);
+        let nodeList = document.querySelectorAll(select);
         if (nodeList.length > 1) element = nodeList;
-        else element = document.querySelector(selector);
+        else element = document.querySelector(select);
     }
     return element;
 };
@@ -356,7 +356,7 @@ Element.prototype.ready = function (handler) {
     })();
 };
 /**
- * Append one or more elements.
+ * Append one or more __elements.
  *
  * @param {Element} children - The new child or children
  * @returns {Element} This element
@@ -813,7 +813,7 @@ document.addEventListener("dragleave", event => {
         event.target.style.background = "";
 });
 document.addEventListener("drop", event => {
-    // prevent default action (open as link for some elements)
+    // prevent default action (open as link for some __elements)
     event.preventDefault();
     // move dragged elem to the selected drop target
     if ( event.target.className == "player-drop-zone" ) {

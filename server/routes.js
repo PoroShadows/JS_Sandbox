@@ -1,5 +1,6 @@
 var express = require('express');
 var join = require('path').join;
+var debug = require('debug')('Server:Sandbox');
 module.exports = exports = function (app) {
 
     /////////////////////////////////////////////////////////////////
@@ -10,6 +11,7 @@ module.exports = exports = function (app) {
     });
 
     app.get('/kano', function (req, res) {
+        debug('fragment' in req.query);
         res.render('kano', {
             newsInfo: [
                 { id: 45, date: "2016/8/19", preview: "Newシングル「nameless」発売記念 ツイキャス特番 9月8日21時から放送決定　※9/6更新" },

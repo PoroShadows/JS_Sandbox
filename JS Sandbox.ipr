@@ -53,6 +53,7 @@
     <file url="file://$PROJECT_DIR$" libraries="{JS_Sandbox/node_modules}" />
     <file url="file://$PROJECT_DIR$/public/singlepage/singlepage.js" libraries="{Simple-0.0.1}" />
     <includedPredefinedLibrary name="ECMAScript 6" />
+    <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="JavaScriptSettings">
     <option name="languageLevel" value="ES6" />
@@ -63,6 +64,9 @@
         <option name="mavenHome" value="Bundled (Maven 3)" />
       </MavenGeneralSettings>
     </option>
+  </component>
+  <component name="ProjectDictionaryState">
+    <dictionary name="MaHo1301" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
