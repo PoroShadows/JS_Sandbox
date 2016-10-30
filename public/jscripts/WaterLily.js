@@ -1,21 +1,37 @@
+/*(function () {
+
+ if ( typeof window.CustomEvent === "function" ) return false;
+
+ function CustomEvent ( event, params ) {
+ params = params || { bubbles: false, cancelable: false, detail: undefined };
+ var evt = document.createEvent( 'CustomEvent' );
+ evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+ return evt;
+ }
+
+ CustomEvent.prototype = window.Event.prototype;
+
+ window.CustomEvent = CustomEvent;
+ })();*/
+
 /**
  * Test is the object is a instance of the primitive
  *
- * @param {Object} obj
+ * @param {*} obj
  * @param {Function|Object} primitive
+ * @param {Boolean} [strict]
  * @return {Boolean}
  * @public
  */
-function is(obj, primitive) {
-    if (obj === undefined || obj === null)
-        return false;
-    if (obj.constructor === primitive)
-        return true;
-    var defaults = [Boolean, Number, Object, String, Array, Function];
-    for (var i = 0; i < defaults.length; i++) if (primitive === defaults[i] && obj.constructor === defaults[i]) return true;
-    return primitive.prototype ? primitive.prototype.isPrototypeOf(obj) : primitive.isPrototypeOf(obj);
-}
-
+const is = (obj, primitive, strict) =>
+    (obj != undefined && primitive != undefined) && (primitive.constructor === Function || primitive.constructor === Object) ?
+        strict || false ?
+        obj.constructor === primitive :
+            obj.constructor === Array ?
+            (obj.constructor === Object && 'length' in obj && obj['length'].constructor === Number && obj['length'] - 1 in obj) || true :
+                obj.constructor === primitive ? true :
+                    primitive.isPrototypeOf(obj) :
+        obj === undefined ? primitive === undefined : strict || true ? obj === primitive : obj == primitive
 /**
  * Iterate over:
  * array,
@@ -29,62 +45,55 @@ function is(obj, primitive) {
  *
  * Null or undefined does not run at all.
  *
- * @example
- * <pre>// Object
- *each({hello: "world"}, function (key, value, object) {
- *    console.log(key);   // hello
- *    console.log(value); // "world"
- *});</pre>
- * @example
- * <pre>// Array
- *each(["hello", "world"], function (value, index, array) {
- *    console.log(value); // "hello", "world"
- *    console.log(index); // 0, 1
- *});</pre>
- * @example
- * <pre>// Object like array
- *each({ length: 2, 0: "hello", 1: "world"}, function (value, index, array) {
- *    console.log(value); // "hello", "world"
- *    console.log(index); // 0, 1
- *});</pre>
- * @example
- * <pre>// String
- *each("hello world", function (char, index, array) {
- *    console.log(char);  // 'h', 'e', 'l', 'l', 'o', ' ', 'w', ...
- *    console.log(index); // "hello world", "hello world", ...
- *});</pre>
- * @example
- * <pre>// Number
- *each(4, function (iteration, iterationAmount) {
- *    console.log(iteration);       // 0, 1, 2, 3
- *    console.log(iterationAmount); // 4, 4, 4, 4
- *});</pre>
- * @example
- * <pre>// Boolean
- *each(true, function () {
- *    console.log('Runs');
- *});
- *each(false, function () {
- *    console.log('Does not run');
- *});</pre>
- *
  * @param {*} obj - The whatever to iterate over
  * @param {Function} fn - The function to run
- * @param {*} [thisArg] - The this representation
+ * @param {Object} [opts] - Options
+ * @param {*} [opts.thisArg] - The this representation
+ * @param {Function} [opts.predicate] - The this representation
+ * @param {*} [opts.returns] - The this representation
+ * @param {Boolean} [opts.gather=false] - The this representation
+ * @param {Boolean} [opts.promise=false] - The this representation
+ * @param {Boolean} [opts.onlyIf=true] - The this representation
+ * @param {Boolean} [opts.mustOwn=true] - If object must own the iterated name
  * @returns {*} The 'obj' reference
  * @public
  */
-function each(obj, fn, thisArg) {
-    if (obj == undefined || obj == null) return obj;
-    var idx = 0, name = '';
-    thisArg = thisArg || obj;
-    if (isArray(obj) || is(obj, String)) for (; idx < obj['length']; idx++) fn.call(thisArg, obj[idx], idx, obj);
-    else if (is(obj, Number)) for (; idx < obj; idx++) fn.call(thisArg, idx, obj);
-    else if (is(obj, Object)) for (name in obj) if (obj.hasOwnProperty(name)) fn.call(thisArg, name, obj[name], obj);
-    else if (is(obj, Boolean) && obj) fn.call(thisArg);
-    return obj;
-}
+const each = (obj, fn, opts) => {
+    if (is(obj, undefined, false) || is(fn, undefined)) return obj
+    opts = defaults(opts, {
+        gather: false,
+        promise: false,
+        runIf: true,
+        returns: obj,
+        predicate: () => true,
+        thisArg: obj,
+        mustOwn: true
+    })
+    let idx = 0, name = '', gather = []
 
+    if (opts.runIf) {
+        const run = function () {
+            return opts.predicate.apply(null, arguments) ?
+                gather.push(fn.apply(opts.thisArg, arguments)) :
+                gather.push(null)
+        }
+        if (is(obj, Array) || is(obj, String)) for (; idx < obj['length']; idx++) run(obj[idx], idx, obj)
+        else if (is(obj, Number)) for (; idx < obj; idx++) run(idx, obj)
+        else if (is(obj, Object)) {
+            for (name in obj) //noinspection JSUnfilteredForInLoop
+                if (!opts.mustOwn || opts.mustOwn && obj.hasOwnProperty(name)) //noinspection JSUnfilteredForInLoop
+                    run(name, obj[name], obj)
+        } else if (is(obj, Boolean) && obj) run()
+        if (gather.filter(item => !is(item, Object)).length == 0) {
+            let temp = {}
+            for (let i = 0, obj = gather[i]; i < gather.length; i++, obj = gather[i])
+                temp = mergeObjects(temp, obj)
+            gather = temp
+        }
+    }
+    const ret = opts.gather ? gather : opts.returns
+    return opts.promise ? WaterStream.resolve(ret) : ret
+}
 /**
  * Merge two objects
  *
@@ -94,37 +103,18 @@ function each(obj, fn, thisArg) {
  * @returns {Object}
  * @public
  */
-function merge(first, second, override) {
-    each(enumerableKeys(second), function (key) {
-        if (!first.hasOwnProperty(key) || (first.hasOwnProperty(key) && override))
-            first[key] = second[key];
-    });
-    return first;
+const mergeObjects = (first, second, override) => {
+    for (let i = 0, keys = Object.keys(second), key = keys[i]; i < keys.length; i++, key = keys[i])
+        if (!(key in first) || key in first && override)
+            first[key] = second[key]
+    return first
 }
-
 /**
- * Get every enumerable field in a object
  *
- * @param {Object} obj
- * @return {String[]}
- * @public
+ * @param {Object} actual
+ * @param {Object} defaults
  */
-function enumerableKeys(obj) {
-    var hasEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
-        skippedEnums = ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor'],
-        enumerates = [];
-    if (!is(obj, Object) && (!is(obj, Function) || obj === null))
-        throw new TypeError('enumerates called on non-object');
-    function add(val) {
-        if (obj.hasOwnProperty(val))
-            this.push(val);
-    }
-
-    each(obj, add, enumerates);
-    if (hasEnumBug) each(skippedEnums, add, enumerates);
-    return enumerates;
-}
-
+const defaults = (actual, defaults) => actual == undefined ? defaults : mergeObjects(actual, defaults)
 /**
  * Define one or some properties to a object
  *
@@ -134,154 +124,153 @@ function enumerableKeys(obj) {
  * @returns {Object} A 'obj' reference
  * @public
  */
-function defineProps(obj, properties, desc) {
-    function isDesc(obj) {
-        return is(obj, Object) && ('set' in obj || 'get' in obj) && ('value' in obj || 'writable' in obj) &&
-            enumerableKeys(obj).join('').replace(/set|get|value|writable|configurable|enumerable/g, '').length == 0
-    }
+const defineProps = (obj, properties, desc) => {
+    const isDesc = obj => is(obj, Object) && ('set' in obj || 'get' in obj) && ('value' in obj || 'writable' in obj) &&
+    Object.keys(obj).join('').replace(/set|get|value|writable|configurable|enumerable/g, '').length == 0
 
-    function regular(obj, name, desc) {
+
+    const regular = (obj, name, desc) => {
         if (isDesc(desc)) {
-            desc.configurable = desc.configurable || false;
-            desc.enumerable = desc.enumerable || true;
-            if ('value' in desc) desc.writable = desc.writable || true;
-            Object.defineProperty(obj, name, desc);
-        } else obj[name] = desc;
-        return obj;
+            desc.configurable = desc.configurable || false
+            desc.enumerable = desc.enumerable || true
+            if ('value' in desc) desc.writable = desc.writable || true
+            Object.defineProperty(obj, name, desc)
+        } else obj[name] = desc
+        return obj
     }
 
-    if (is(obj, String)) return regular({}, obj, properties);
-    if (is(properties, String)) return regular(obj, properties, desc);
+    if (is(obj, String)) return regular({}, obj, properties)
+    if (is(properties, String)) return regular(obj, properties, desc)
     if (!properties) {
-        properties = obj;
-        obj = {};
+        properties = obj
+        obj = {}
     }
-    var defaults = desc || {};
+    const defaults = desc || {}
 
-    function convert(desc) {
-        if (!is(desc, Object) || desc == null)
+    const convert = desc => {
+        if (is(desc, undefined) || !is(desc, Object))
             return desc;
-        var descriptor = {};
-        each(["enumerable", "configurable", "value", "writable"], function (name) {
-            if (desc.hasOwnProperty(name) || defaults.hasOwnProperty(name))
-                this[name] = !!desc[name] ? desc[name] : !!defaults[name] ? defaults[name] : undefined;
-        }, descriptor);
-        each(["get", "set"], function (name) {
-            var fun = desc[name];
-            if (fun === undefined) return;
-            if (!is(fun, Function))
-                throw new TypeError("Bad " + name);
-            this[name] = fun;
-        }, descriptor);
+        let descriptor = {}
+        each(["enumerable", "configurable", "value", "writable"],
+            name => this[name] = !!desc[name] ? desc[name] : !!defaults[name] ? defaults[name] : undefined,
+            { thisArg: descriptor, predicate: name => desc.hasOwnProperty(name) || defaults.hasOwnProperty(name) })
+        each(["get", "set"],
+            name => {
+                const fun = desc[name]
+                if (!is(fun, Function))
+                    throw new TypeError("Bad " + name)
+                this[name] = fun;
+            },
+            { thisArg: descriptor, predicate: name => desc[name] !== undefined })
         if (('set' in obj || 'get' in obj) && ('value' in obj || 'writable' in obj))
-            throw new TypeError("The descriptor is confused about its identity");
-        return descriptor;
+            throw new TypeError("The descriptor is confused about its identity")
+        return descriptor
     }
 
     if (!is(obj, Object))
-        throw new TypeError("Bad object");
-    each(enumerableKeys(properties), function (key) {
-        var item = convert(properties[key]);
-        if (isDesc(item))
-            Object.defineProperty(obj, key, item);
-        else obj[key] = item;
-    });
-    return obj;
+        throw new TypeError("Bad object")
+    each(Object.keys(properties), key => {
+        const desc = convert(properties[key])
+        if (isDesc(desc))
+            Object.defineProperty(obj, key, desc)
+        else obj[key] = desc
+    })
+    return obj
 }
-
-/**
- * Check if a object can be considered a array.
- *
- * @param {*} obj
- * @returns {Boolean}
- * @public
- */
-function isArray(obj) {
-    return is(obj, Array) ||
-        is(obj, Object) && 'length' in obj && is(obj['length'], Number) && obj['length'] - 1 in obj
-}
-
 /**
  * WaterStream is a Promise polyfill
  *
  * @param {function(resolve, reject)} resolver
+ * @returns {WaterStream}
  * @public
  * @constructor
  */
 function WaterStream(resolver) {
-    var state = 'pending';
-    var value;
-    var deferred = null;
-    var spread = false;
+    let state = 'pending',
+        value,
+        deferred,
+        spread = false
 
     //noinspection JSUnusedGlobalSymbols
-    this.isFulfilled = function () {
-        return state == 'fulfilled'
-    };
+    /**
+     * If the promise has fulfilled
+     *
+     * @returns {Boolean}
+     * @public
+     */
+    this.isFulfilled = () => state == 'fulfilled'
     //noinspection JSUnusedGlobalSymbols
-    this.isPending = function () {
-        return state == 'pending'
-    };
+    /**
+     * If the promise is pending
+     *
+     * @returns {Boolean}
+     * @public
+     */
+    this.isPending = () => state == 'pending'
     //noinspection JSUnusedGlobalSymbols
-    this.isRejected = function () {
-        return state == 'fulfilled'
-    };
+    /**
+     * If the promise has rejected
+     *
+     * @returns {Boolean}
+     * @public
+     */
+    this.isRejected = () => state == 'fulfilled'
     //noinspection JSUnusedGlobalSymbols
-    this.isResolved = function () {
-        return state == 'resolved'
-    };
+    /**
+     * If the promise has resolved
+     *
+     * @returns {Boolean}
+     * @public
+     */
+    this.isResolved = () => state == 'resolved'
+    this.stop = () => {
+        throw ReferenceError('Not implemented')
+    }
 
-    function resolve(newValue) {
+    const resolve = newValue => {
         try {
-            if (newValue && typeof newValue.then === 'function') {
-                newValue.then(resolve, reject);
-                return;
-            }
+            if (newValue && typeof newValue.then === 'function')
+                return newValue.then(resolve, reject);
             state = 'resolved';
             value = newValue;
 
-            if (deferred) {
+            if (deferred)
                 handle(deferred);
-            }
         } catch (e) {
             reject(e);
         }
     }
-
-    function reject(reason) {
+    const reject = reason => {
         state = 'rejected';
         value = reason;
 
-        if (deferred) {
-            handle(deferred);
-        }
+        if (deferred)
+            handle(deferred)
     }
+    const handle = handler => {
+        if (state === 'pending')
+            return deferred = handler;
+        setTimeout(() => {
+            const isResolved = state === 'resolved',
+                handlerCallback = isResolved ? handler.onResolved : handler.onRejected
 
-    function handle(handler) {
-        if (state === 'pending') {
-            deferred = handler;
-            return;
-        }
-        setTimeout(function () {
-            var handlerCallback = state === 'resolved' ? handler.onResolved : handler.onRejected;
+            if (!handlerCallback)
+                return handler[isResolved ? 'resolve' : 'reject'](value)
 
-            if (!handlerCallback) {
-                handler[state === 'resolved' ? 'resolve' : 'reject'](value);
-                return;
-            }
-
-            var ret;
+            let ret
             try {
-                ret = handlerCallback(value);
                 if (spread)
-                    handler.resolve.apply(this, ret);
-                else handler.resolve(ret);
-                spread = false;
+                    ret = handlerCallback.apply(this, value.constructor === Array ? value : [value])
+                else ret = handlerCallback(value)
+                spread = false
+                if (!this.isFulfilled())
+                    handler.resolve(ret)
             } catch (e) {
-                handler.reject(e);
+                if (!this.isFulfilled())
+                    handler.reject(e)
             }
-            state = 'fulfilled';
-        }, 1);
+            state = 'fulfilled'
+        }, 1)
     }
 
     /**
@@ -292,20 +281,34 @@ function WaterStream(resolver) {
      * @returns {WaterStream}
      * @public
      */
-    this.then = function (onResolved, onRejected) {
-        return new WaterStream(function (resolve, reject) {
-            handle({
-                onResolved: onResolved,
-                onRejected: onRejected,
-                resolve: resolve,
-                reject: reject
-            });
-        });
-    };
-    //noinspection JSUnusedGlobalSymbols
+    this.then = (onResolved, onRejected) => new WaterStream((resolve, reject) => handle({
+        onResolved: onResolved,
+        onRejected: onRejected,
+        resolve: resolve,
+        reject: reject
+    }));
     /**
-     * Not standard do not expect this to work in other
-     * Promise libraries
+     * Can be useful for error handling in your promise
+     * composition.
+     *
+     * The Error type is not a standard parameter!!!
+     * Catch only if it is a specific error *.catch(type, onRejected)
+     *
+     * @param {function(reason)|Function} [onRejected]
+     * @param {function(reason)} [onReject]
+     * @returns {WaterStream}
+     * @public
+     */
+    this.catch = (onRejected, onReject) => arguments.length <= 1 ? new WaterStream((resolve, reject) => handle({
+        onResolved: undefined,
+        onRejected: onRejected,
+        resolve: resolve,
+        reject: reject
+    })) :
+        value == onRejected ? this.catch(onReject) : this.catch();
+    /**
+     * NOT STANDARD
+     * Do not expect this to work in other Promise libraries.
      *
      * Ensure error catch handles by the onRejected function
      *
@@ -314,44 +317,10 @@ function WaterStream(resolver) {
      * @returns {WaterStream}
      * @public
      */
-    this.done = function (onResolved, onRejected) {
-        return new WaterStream(function (resolve) {
-            handle({
-                onResolved: onResolved,
-                onRejected: onRejected,
-                resolve: resolve,
-                reject: function reject(reason) {
-                    state = 'resolved';
-                    value = reason;
-                    handle({
-                        onResolved: onRejected,
-                        resolve: resolve
-                    });
-                }
-            });
-        });
-    };
-    /**
-     * Can be useful for error handling in your promise
-     * composition.
-     *
-     * @param {function(reason)} [onRejected]
-     * @returns {WaterStream}
-     * @public
-     */
-    this.catch = function (onRejected) {
-        return new WaterStream(function (resolve, reject) {
-            handle({
-                onResolved: undefined,
-                onRejected: onRejected,
-                resolve: resolve,
-                reject: reject
-            });
-        });
-    };
-    //noinspection JSUnusedGlobalSymbols
+    this.try = (onResolved, onRejected) => this.then(onResolved).catch(onRejected)
     /**
      * NOT STANDARD
+     * Do not expect this to work in other Promise libraries.
      *
      * If value is an array spread the arguments.
      * Else nothing function as normal then
@@ -361,14 +330,30 @@ function WaterStream(resolver) {
      * @returns {WaterStream}
      * @public
      */
-    this.spread = function (onResolved, onRejected) {
+    this.spread = (onResolved, onRejected) => {
         spread = true;
-        return this.then(onResolved, onRejected);
-    };
+        return this.then(onResolved, onRejected)
+    }
+    /**
+     * NOT STANDARD
+     * Do not expect this to work in other Promise libraries.
+     *
+     * Make a callback from the promise.
+     *
+     * @param {Function} cb
+     * @param {*} [ctx]
+     * @returns {WaterStream|void}
+     * @public
+     */
+    this.callback = (cb, ctx) => {
+        if (typeof cb !== 'function') return this;
+        this.then(value => cb.call(ctx, null, value))
+            .catch(reason => cb.call(ctx, reason))
+    }
 
+    //noinspection JSCheckFunctionSignatures
     resolver(resolve, reject);
 }
-
 /**
  * WaterStream.all passes an array of values from
  * all the promises in the iterable object that it was
@@ -390,23 +375,16 @@ function WaterStream(resolver) {
  * @public
  * @static
  */
-WaterStream.all = function (iterable) {
-    if (!iterable || iterable.length == 0)
-        return WaterStream.resolve();
-    var values = [];
-    iterable = iterable.map(function (item) {
-        return item && typeof item.then === 'function' ? item : WaterStream.resolve(item);
-    });
-    return new WaterStream(function (resolve, reject) {
-        each(iterable, function (item, idx) {
-            item.then(function (value) {
-                values[idx] = value;
-                if (values.length == iterable.length)
-                    resolve(values);
-            }, reject);
-        });
-    });
-};
+WaterStream.all = iterable => new WaterStream((resolve, reject) => {
+    const values = [];
+    iterable = iterable.map(item => item && typeof item.then === 'function' ? item : WaterStream.resolve(item))
+    for (let i = 0; i < iterable.length; i++)
+        iterable[i].then(value => {
+            values[i] = value;
+            if (values.length == iterable.length)
+                resolve(values);
+        }, reject);
+})
 /**
  * The race function returns a WaterStream that is settled
  * the same way as the first passed water stream to settle.
@@ -418,24 +396,16 @@ WaterStream.all = function (iterable) {
  * @public
  * @static
  */
-WaterStream.race = function (iterable) {
-    var block = false;
-    return new WaterStream(function (resolve, reject) {
-        each(iterable, function (item) {
-            item.then(function (value) {
-                if (!block) {
-                    block = true;
-                    resolve(value);
-                }
-            }, function (value) {
-                if (!block) {
-                    block = true;
-                    reject(value);
-                }
-            });
-        });
-    });
-};
+WaterStream.race = iterable => new WaterStream((resolve, reject) => {
+    let block = false
+    const bfn = (fn, v) => {
+        if (block) return
+        else block = true
+        fn(v)
+    }
+    for (let i = 0; i < iterable.length; i++)
+        iterable[i].then(value => bfn(resolve, value), reason => bfn(reject, reason))
+})
 /**
  * Returns a WaterStream that is rejected. For debugging purposes
  * and selective error catching, it is useful to make reason
@@ -447,11 +417,7 @@ WaterStream.race = function (iterable) {
  * @public
  * @static
  */
-WaterStream.reject = function (reason) {
-    return new WaterStream(function (resolve, reject) {
-        reject(reason);
-    });
-};
+WaterStream.reject = reason => new WaterStream((resolve, reject) => reject(reason))
 /**
  * Returns a WaterStream that is resolved.
  *
@@ -462,33 +428,59 @@ WaterStream.reject = function (reason) {
  * @public
  * @static
  */
-WaterStream.resolve = function (value) {
-    return new WaterStream(function (resolve) {
-        resolve(value);
-    });
-};
-
+WaterStream.resolve = value => new WaterStream(resolve => resolve(value))
+/**
+ * Make a function return a promise.
+ *
+ * Useful for callback functions
+ *
+ * @param {Function} fn
+ * @param {Number} [argumentCount] - The amount of parameters the function will have
+ * @param {Boolean} [hasErrorPar=true] - If the callback has error in callback
+ * @returns {Function}
+ */
+WaterStream.promisify = (fn, argumentCount, hasErrorPar) => {
+    argumentCount = argumentCount || Infinity
+    hasErrorPar = hasErrorPar || true
+    return function () {
+        const self = this
+        const args = Array.prototype.slice.call(arguments)
+        return new WaterStream((resolve, reject) => {
+            while (args.length && args.length > argumentCount) args.pop()
+            args.push((err, res) => {
+                if (!hasErrorPar)
+                    resolve['apply'](Array.prototype.slice.call(arguments))
+                else if (err) reject(err)
+                else resolve(res)
+            })
+            const result = fn.apply(self, args)
+            if (result) resolve(result)
+        });
+    }
+}
 /**
  *
- * @param {String|*} select
- * @param {Element|String|Document|Object|null} [data]
- * @param {Element|String|Array.<Element|String>} [content]
+ * @param {String|Function} select
+ * @param {Object|null|Element|Document|String} [data]
+ * @param {Element...|String...|Array.<Element|String>...} [content]
  * @returns {Element|Element[]|WaterStream}
  */
 function WaterLily(select, data, content) {
-    if (is(select, String)) {
-        if (is(data, undefined) || is(data, Document) || is(data, HTMLElement) || is(data, Element) || is(data, Window))
-            return WaterLily.find(select, data);
-        else return WaterLily.create.apply(this, arguments);
-    } else if (is(select, Function)) {
+    if (is(select, String))
+        return (() => /\s+|^<.*>$/g.test(select) || is(data, null) || is(data, Object) ?
+            WaterLily.create.apply(null, arguments) :
+            WaterLily.find(select, data))()
+    else if (is(select, Function)) {
         switch (select.length) {
             case 0:
             case 1:
-                window.addEventListener('DOMContentLoaded', select);
-                break;
+                window.addEventListener('DOMContentLoaded', select)
+                break
             case 2:
-                return new WaterStream(select);
+                return new WaterStream(select)
         }
+    } else if (is(select, Array)) {
+
     }
 }
 
@@ -500,9 +492,7 @@ function WaterLily(select, data, content) {
  * @public
  * @static
  */
-WaterLily.all = function (iterable) {
-    return WaterStream.all(iterable);
-};
+WaterLily.all = iterable => WaterStream.all(iterable)
 /**
  * @see WaterStream.race
  * @param {Array.<WaterStream>} iterable
@@ -511,9 +501,7 @@ WaterLily.all = function (iterable) {
  * @public
  * @static
  */
-WaterLily.race = function (iterable) {
-    return WaterStream.race(iterable);
-};
+WaterLily.race = iterable => WaterStream.race(iterable)
 /**
  * @see WaterStream.reject
  * @param {Error|String} [reason]
@@ -522,9 +510,7 @@ WaterLily.race = function (iterable) {
  * @public
  * @static
  */
-WaterLily.reject = function (reason) {
-    return WaterStream.reject(reason);
-};
+WaterLily.reject = reason => WaterStream.reject(reason)
 /**
  * @see WaterStream.resolve
  * @param {T|WaterStream} [value]
@@ -534,10 +520,7 @@ WaterLily.reject = function (reason) {
  * @public
  * @static
  */
-WaterLily.resolve = function (value) {
-    return WaterStream.resolve(value);
-};
-
+WaterLily.resolve = value => WaterStream.resolve(value)
 /**
  * Find a element in the document or in a custom context
  *
@@ -547,13 +530,11 @@ WaterLily.resolve = function (value) {
  * @public
  * @static
  */
-WaterLily.find = function (selector, context) {
-    context = is(context, Element) ? context : is(context, String) ? WaterLily.find(context) : document;
-    console.log(is(context, Element) || is(context, String));
-    var list = context.querySelectorAll(selector);
-    return list.length > 1 ? list : list.length == 1 ? list[0] : undefined;
-};
-
+WaterLily.find = (selector, context) => {
+    context = is(context, Element) ? context : is(context, String) ? WaterLily.find(context) : document
+    const list = context.querySelectorAll(selector)
+    return list.length > 1 ? list : list.length == 1 ? list[0] : undefined
+}
 /**
  * Create a element
  *
@@ -565,39 +546,46 @@ WaterLily.find = function (selector, context) {
  * @static
  */
 WaterLily.create = function (tagName, attributes, content) {
-    tagName = tagName || 'div';
-    content = is(content, Array) ? content : Array.prototype.slice.call(arguments, 2);
+    tagName = tagName || 'div'
+    content = is(content, Array) ? content : Array.prototype.slice.call(arguments, 2)
     if (/\s+|^<.*>$/g.test(tagName)) {
-        tagName = tagName.replace(/^<|>$/g, '');
+        tagName = tagName.replace(/^<|>$/g, '')
         //noinspection SpellCheckingInspection
-        var attribs = tagName.split(/\s/), attrs = {}, key = '';
-        tagName = attribs.splice(0, 1)[0];
-        if (!/^(\s?)+$/.test(attribs.join(' '))) each(attribs, function (item) {
+        let attribs = tagName.split(/\s/), attrs = {}, key = ''
+        tagName = attribs.splice(0, 1)[0]
+        each(attribs,
+            function (item) {
             key = this(attrs,
                 key ? key : /=+/.test(item) ? (item = item.split(/=/)).splice(0, 1)[0] : item,
                 key ? item : Array.isArray(item) ? item.join('=').replace(/^"|^'/g, '') : ''
             );
-        }, function (attrs, key, value) {
-            attrs[key] = (attrs.hasOwnProperty(key) ? attrs[key] + ' ' : '') + value;
-            if (!value) return '';
-            if (/"$|'$/g.test(value)) {
-                attrs[key] = attrs[key].replace(/"$|'$/g, '');
-                return '';
-            }
-            return key;
-        });
-        attributes = defineProps(attributes || {}, attrs);
+        },
+            { thisArg: (attrs, key, value) => {
+                attrs[key] = (attrs.hasOwnProperty(key) ? attrs[key] + ' ' : '') + value;
+                if (!value) return '';
+                if (/"$|'$/g.test(value)) {
+                    attrs[key] = attrs[key].replace(/"$|'$/g, '');
+                    return '';
+                }
+                return key;
+            }, runIf: !/^(\s?)+$/.test(attribs.join(' ')) })
+        attributes = defineProps(attributes || {}, attrs)
     }
-    var elem = document.createElement(tagName);
-    each(attributes || {}, HTMLElement.prototype.setAttribute, elem);
-    each(content, function (item) {
-        this.appendChild(is(item, String) ? document.createTextNode(item) : item);
-    }, elem);
-    return elem;
-};
+    const elem = document.createElement(tagName)
+    each(attributes || {}, HTMLElement.prototype.setAttribute, { thisArg: elem })
+    each(content,
+        item => elem.appendChild(is(item, String) ? document.createTextNode(item) : item))
+    return elem
+}
+function Response(data, error, xhr) {
+    this.data = data
+    this.error = error
+    this.type = xhr.responseType || 'text'
 
+    this.json = () => WaterStream.resolve(JSON.parse(this.data))
+}
 /**
- * Request an external source.
+ * Make ajax call.
  *
  * @param {String} url
  * @param {Object} [req]
@@ -605,119 +593,137 @@ WaterLily.create = function (tagName, attributes, content) {
  * @param {String} [req.type=''] - arraybuffer (ArrayBuffer), blob (Blob), document (Document), json (Object), text (DOMString)
  * @param {Object} [req.headers={}]
  * @param {Object} [req.query={}]
+ * @param {String|ArrayBuffer|Blob|Document|FormData} [req.post]
+ * @param {Boolean} [req.async=true]
+ * @param {String} [req.user]
+ * @param {String} [req.password]
  * @returns {WaterStream}
  * @public
  * @static
  */
-WaterLily.request = function (url, req) {
-    return new WaterStream(function (resolve, reject) {
-        var xhr = new XMLHttpRequest;
-        xhr.responseType = req.type || '';
-        each(req.headers || {}, xhr.setRequestHeader);
-        var params = '';
-        each(req.query || {}, function (name, value) {
-            params += (this.indexOf(name) == 0 ? '?' : '&') + encodeURIComponent(name) + '=' + encodeURIComponent(value);
-        }, enumerableKeys(req.query || {}));
-        xhr.open(req.method || 'GET', url + params);
-        xhr.send();
-        //noinspection SpellCheckingInspection
-        xhr.onload = function () {
-            if (200 <= this.status < 300)
-                resolve(this.response);
-            else reject(this.statusText);
-        };
-        //noinspection SpellCheckingInspection
-        xhr.onerror = function () {
-            reject(this.statusText)
-        };
-    });
-};
-
+WaterLily.ajax = (url, req) => new WaterStream((resolve, reject) => {
+    req = defaults(req, {
+        method: 'GET',
+        type: '',
+        headers: {},
+        query: {},
+        post: undefined,
+        async: true,
+        user: undefined,
+        password: undefined
+    })
+    const xhr = new XMLHttpRequest, encode = encodeURIComponent
+    xhr.responseType = req.type || ''
+    each(req.headers, xhr.setRequestHeader)
+    const params = each(req.query,
+        (name, value) => `${this.indexOf(name) == 0 ? '?' : '&'}${encode(name)}=${encode(value)}`,
+        { thisArg: Object.keys(req.query), gather: true }).join('')
+    xhr.open(req.method, url + params, req.async, req.user, req.password)
+    //noinspection SpellCheckingInspection
+    xhr.onload = () => 200 <= xhr.status < 300 ?
+        resolve(new Response(xhr.response, undefined, xhr)) :
+        reject(new Response(undefined, xhr.statusText, xhr))
+    //noinspection SpellCheckingInspection
+    xhr.onerror = () => reject(new Response(undefined, Error('Network failed'), xhr))
+    xhr.send(req.post);
+});
 /**
  * @param {NodeList|Element...|String} element
  * @constructor
- */
 function Change(element) {
     element = is(element, String) ? WaterLily.find(element) : element;
     this.__elements = is(element, NodeList) ? element : Array.prototype.slice.call(arguments, 0);
 
-    function template(inst, attribute, name, value) {
+    const template = (inst, attribute, name, value) => {
         if (value === undefined) {
-            var ret;
-            if (name === undefined) {
-                return inst.__elements[0][attribute];
-            } else if (isArray(name)) {
-                ret = {};
-                each(name, function (name) {
-                    if (inst.__elements.length == 1)
-                        ret[name] = inst.__elements[0][attribute][name];
-                    else each(inst.__elements, function (element) {
-                        if (ret.hasOwnProperty(name))
-                            ret[name].push(element[attribute][name]);
-                        else ret[name] = [element[attribute][name]];
-                    });
-                });
-            } else if (is(name, String)) {
-                ret = [];
-                each(inst.__elements, function (element) {
-                    this.push(element[attribute][name]);
-                }, ret = []);
-            } else {
+            let ret
+            const run = name => each.bind(null, inst.__elements,
+                element => this.hasOwnProperty(name) ? this[name].push(element[attribute][name]) : this[name] = [element[attribute][name]],
+                { thisArg: {}, gather: true })
+            if (name === undefined) return inst.__elements[0][attribute];
+            else if (is(name, Array))
+                ret = each(name, name =>
+                        inst.__elements.length == 1 ?
+                        { [name]: inst.__elements[0][attribute][name] } :
+                        { [name]: run(name) },
+                    { gather: true })
+            else if (is(name, String))
+                ret = run(name)[name]
+            else {
 
                 return this;
             }
-            return isArray(ret) && ret.length == 1 ? ret[0] : ret;
+            return is(ret, Array) && ret.length == 1 ? ret[0] : ret;
         }
         return this;
     }
 
-    /**
+    /!**
      *
      * @param {String|Array.<String>|Object} name
      * @param {String|Number|Boolean|Function} [value]
      * @returns {Change}
-     */
-    this.css = function (name, value) {
-        return template(this, 'style', name, value);
-    };
-    this.attr = function (name, value) {
-        return template(this, 'attributes', name, value);
-    };
-    /**
+     *!/
+    this.css = (name, value) => template(this, 'style', name, value)
+    this.attr = (name, value) => template(this, 'attributes', name, value)
+    /!**
      * @param {Number} [idx]
      * @returns {Element|Array.<Element>}
-     */
-    this.get = function (idx) {
+     *!/
+    this.get = idx => {
+        const elements = this.__elements;
         return (
             !!idx ?
-                idx < this.__elements.length ?
+                idx < elements.length ?
                     idx >= 0 ?
-                        this.__elements[idx] :
-                        this.__elements[0] :
-                    this.__elements[this.__elements.length - 1] :
-                this.__elements.length == 1 ?
-                    this.__elements[0] :
-                    this.__elements
+                        elements[idx] :
+                        elements[0] :
+                    elements[this.__elements.length - 1] :
+                elements.length == 1 ?
+                    elements[0] :
+                    elements
         );
     }
 }
 
-/**
+/!**
  *
  * @param {NodeList|Element...|String} element
  * @returns {Change}
- */
-WaterLily.change = function (element) {
-    return new Change(element);
-};
+ *!/
+WaterLily.change = element => new Change(element)*/
 
-var r = {
-    is: is,
-    each: each,
-    merge: merge,
-    enumerableKeys: enumerableKeys,
-    defineProps: defineProps,
-    isArray: isArray,
-    WaterLily: WaterLily,
-    WaterStream: WaterStream
-};
+/**
+ * Make asynchronous code look like synchronous
+ *
+ * @param {Generator|Function} generator
+ * @returns {WaterStream}
+ */
+const flow = generator => {
+    const iterator = generator(),
+        iterate = iteration => {
+            if (iteration.done) return iteration.value
+            const value = iteration.value
+            return typeof value.then === 'function' ?
+                value.then(v => iterate(iterator.next(v))) :
+                WaterStream.resolve(iterate(iterator.next(value)))
+        }
+    return iterate(iterator.next())
+}
+
+function Delta() {
+    if (typeof this === 'function')
+        throw new TypeError('Only new routes are allowed')
+    this.__routes = {}
+    this.__current = null
+    //TODO Do implementation
+}
+
+/*if (arguments[2].constructor.name === 'Module')
+ module.exports = {
+ WaterLily,
+ flow,
+ WaterStream
+ }*/
+
+//export {WaterLily}

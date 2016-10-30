@@ -1,0 +1,258 @@
+// Comments
+
+// Comment
+/* Block comment */
+
+
+// variable
+
+// prefix variable with mut to make it mutable
+// must be something at initialization
+
+token
+
+
+// number
+token = 0
+
+
+// string
+
+// interpolation is "${token}"
+
+token = ''
+token = ""
+
+
+// array
+
+// can be on multiple lines
+// can omit brackets (not when empty or range)
+
+token = [item1, item2, ..., itemN]
+token = [x..n] // x to n values
+
+
+// object
+
+// can be on multiple lines
+// can omit braces (not when empty) and commas
+
+token = {}
+token = { name: value }
+token = { n1: v1, n2: v2 }
+
+
+// function
+
+// everything can be on new lines
+// args can have default values (arg1, arg2 = some value)
+// if the value starts with colon you can select a parameter [(arg1, thisArg = :arg1) -> ...]
+// named parameters and [(arg2 = 'value')]
+// can omit parentheses if only one parameter
+// function ([token () -> ...] becomes [function token() ...]) if no equals variable ([token = () -> ...] becomes [token = function () ...])
+// in multiline block you can omit return when you want to return
+
+token (par1, par2, ..., parN) -> [expression with return or { multiline block }]
+
+
+// for
+
+// everything can be on new lines
+// can omit parentheses (must end with colon [for ...: ...])
+// $ = expression or { multiline block }
+// if value is a object then token is the current name/key and i is the current value
+// if value is a array or string then token is the current value and i is the current index
+// if value is a range then token is the current number
+
+for (token[, i] in value) [$]
+for (initialization; condition; afterthought) [$]
+
+
+// switch
+
+// renamed to when
+// everything can be on new lines
+// can omit parentheses of token
+// can omit braces (statements must end with semicolon not required on blocks)
+// value can be anything. if value is number then you can place <,<=,>,>= before the values
+
+when (token) {
+    value1: [expression or { multiline block }]
+    value2: [expression or { multiline block }]
+    ...
+    valueN: [expression or { multiline block }]
+    else: [expression or { multiline block }]
+}
+
+// if
+
+// everything can be on new lines
+// can omit parentheses (end condition with then or colon [if condition then or : ...])
+// $ = expression or { multiline block }
+
+if (condition) [$]
+if (condition) [$] else [$]
+if (condition) [$] else if (condition) [$] else [$]
+
+
+// while
+
+// everything can be on new lines
+// can omit parentheses (end condition with then or colon [if condition then or : ...])
+
+while (condition) [expression or { multiline block }]
+
+
+// range
+
+token = x..n
+
+
+// try
+
+// can omit braces if it is only one line or expression
+// can omit parentheses by catch, but variable must end with colon (:)
+
+try { ... } catch (error) { ... }
+
+
+// Examples
+
+// variables
+
+immutableValue = 1
+mut mutableValue = 1
+
+immutableValue = 2 // Syntax Error: Tried to change a immutable value
+mutableValue = 2 // 2
+
+string = "poo"
+stringOfMutableValue = "${mutableValue}"
+stringOfImmutableValue = "${immutableValue}"
+
+ohANumber = 10
+
+array = ["hello", "world"]
+arrayRange = [1..10] // [1, 2, ..., 9, 10]
+
+obj = {}
+obj = {
+    hello: "world"
+    array
+    fun -> "This is a FUN function"
+}
+
+// functions
+
+hw -> console.log("Hello world")
+doubleMe x -> x * 2
+doubleUs x = 0 y = 0 -> doubleMe x + doubleMe y
+doubleLowNumber num -> if num >= 100: num else num * 2
+count *-> for num in 1..10: yield num // Generator
+
+hw() // logs: Hello world
+doubleMe(9) // 18
+doubleUs(:y = 6) // 12
+doubleLowNumber(10) // 20
+doubleLowNumber(150) // 150
+count().next() // 1
+count().next() // 2
+doubleMe() // Syntax Error: Parameters cannot be null or undefined
+
+// A "class"
+Doge -> {
+    constructor suchValue = "much value" -> {
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// from 104 lines and 2936 chars to 76 lines and 2192 chars
+WaterStream resolver -> {
+    mut state = 'pending'
+    mut value
+    mut deferred
+    mut spread = false
+
+    this.isFulfilled -> state == 'fulfilled'
+    this.isPending -> state == 'pending'
+    this.isRejected -> state == 'fulfilled'
+    this.isResolved -> state == 'resolved'
+
+    resolve newValue -> try {
+        if newValue and newValue.then is Function:
+            return newValue.then(resolve, reject)
+        state = 'resolved'
+        value = newValue
+
+        if deferred:
+            handle(deferred)
+    } catch e: reject(e)
+
+    reject reason -> {
+        state = 'rejected'
+        value = reason
+
+        if deferred:
+            handle(deferred);
+    }
+
+    handle handler -> {
+        if state === 'pending':
+            return deferred = handler
+        setTimeout(-> {
+            handlerCallback = if (isRes = state === 'resolved'): handler.onResolved else handler.onRejected;
+
+            if !handlerCallback:
+                return handler[if isRes: 'resolve' else 'reject'](value)
+
+            try {
+                ret = handlerCallback(value);
+                if spread:
+                    handler.resolve.apply(this, ret);
+                else handler.resolve(ret);
+                spread = false;
+            } catch e: handler.reject(e)
+            state = 'fulfilled'
+        }, 1)
+    }
+
+    this.then onResolved onRejected -> new WaterStream(resolve reject -> handle({
+        onResolved
+        onRejected
+        resolve
+        reject
+    }))
+    this.catch = onRejected onReject ->
+        if arguments.length <= 1: new WaterStream(resolve reject -> handle({
+            onResolved: onRejected
+            onRejected
+            resolve
+            reject
+        }))
+        else if value is onRejected: this.catch(onReject)
+        else this.catch()
+    };
+    this.try onResolved onRejected -> this.then(onResolved).catch(onRejected)
+    this.spread = onResolved onRejected -> {
+        spread = true
+        this.then(onResolved, onRejected)
+    }
+    this.callback cb ctx ->
+        if not cb is Function: this;
+        else this.then(value -> cb.call(ctx, null, value)).catch(reason -> cb.call(ctx, reason))
+
+    resolver(resolve, reject)
+}

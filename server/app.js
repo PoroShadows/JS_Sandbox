@@ -19,3 +19,4 @@ app.use(express.static(join(__dirname, '..', 'public')));
 
 require('./routes')(app);
 module.exports = exports = app;
+//export default app

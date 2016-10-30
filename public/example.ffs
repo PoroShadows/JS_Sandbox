@@ -1,0 +1,231 @@
+// Comments
+
+// Comment
+/* Block comment */
+
+
+// variable
+token /*= undefined*/
+
+
+// number
+token = 0
+
+
+// string
+
+// interpolation is "${token}"
+
+token = ''
+token = ""
+
+
+// array
+
+// can be on multiple lines
+// can omit brackets (not when empty or range)
+
+token = [item1, item2, ..., itemN]
+token = [x..n] // x to n values and as numbers x+1 until x == n
+
+
+// object
+
+// can be on multiple lines
+// can omit braces (not when empty) and commas
+
+token = {}
+token = { name: value }
+token = { n1: v1, n2: v2 }
+
+
+// function
+
+// everything can be on new lines
+// args can have default values (arg1, arg2 = some value)
+// if the value starts with colon you can select a parameter [(arg1, thisArg = :arg1) -> ...]
+// named parameters and [fun(arg2 = 'value')]
+// can omit parentheses if only one parameter
+// function ([token () -> ...] becomes [function token() ...]) -\\
+// \\- if no equals variable ([token = () -> ...] becomes [token = function () ...])
+
+token = (par1, par2, ..., parN) -> [statement with return or { multiline block }]
+
+
+// for
+
+// everything can be on new lines
+// can omit parentheses (must end with semicolon [for ...; ...])
+// $ = statement or { multiline block }
+// if value is a object then token is the current name/key and i is the current value
+// if value is a array or string then token is the current value and i is the current index
+// if value is a range then token is the current number
+
+for (token[, i] in value) [$]
+for (initialization; condition; afterthought) [$]
+
+
+// switch
+
+// renamed to when
+// everything can be on new lines
+// can omit parentheses of token
+// can omit braces (statements must end with semicolon not required on blocks)
+// value can be anything. if value is number then you can place <,<=,>,>= before the values
+
+when (token) {
+    value1: [statement or { multiline block }]
+    value2: [statement or { multiline block }]
+    ...
+    valueN: [statement or { multiline block }]
+    else: [statement or { multiline block }]
+}
+
+// if
+
+// everything can be on new lines
+// can omit parentheses (end condition with then or colon [if condition then or : ...])
+// $ = statement or { multiline block }
+
+if (condition) [$]
+if (condition) [$] else [$]
+if (condition) [$] else if (condition) [$] else [$]
+
+
+// while
+
+// everything can be on new lines
+// can omit parentheses (end condition with then or colon [if condition then or : ...])
+
+while (condition) [statement or { multiline block }]
+
+
+// range
+
+token = x..n
+
+
+// try
+
+// can omit braces if it is only one line or statement
+
+try { ... } catch (e) { ... }
+
+
+// Examples
+
+// functions
+each(obj, fn, thisArg = :obj) -> {
+    if obj is Array or obj is String or obj is Object and 'length' in obj and obj.length is Number and obj.length - 1 in obj:
+        for i in 0..obj.length-1: fn.call(thisArg, obj[i], i, obj)
+    else if obj is Number: for i in 1..obj: fn.call(thisArg, i, obj)
+    else if obj is Object: for key, value in obj: fn.call(thisArg, k, v, obj)
+    else if obj is Boolean and obj: fn.call(thisArg, k, v, obj)
+    return obj
+}
+
+// 1
+main = args -> log(args)
+
+// 2
+Response = (data, error, xhr) -> {
+    this.data = data
+    this.error = error
+    this.type = xhr.responseType || 'text'
+
+    this.toJSON = () -> WaterStream.resolve(JSON.parse(this.data))
+}
+
+WaterLily.request = (url, req = method: 'GET' type: '' headers: {} query: {}) -> return new WaterStream (resolve, reject) -> {
+    xhr = new XMLHttpRequest
+    params = ''
+    xhr.responseType = req.type
+    each(req.headers, xhr.setRequestHeader)
+    each(req.query, (name, value) ->
+            params += (if (this.indexOf(name) == 0) '?' else '&') + encodeURIComponent(name) + "=${encodeURIComponent(value)}",
+         enumerableKeys(req.query))
+    xhr.open(req.method, url + params)
+    xhr.onload = -> if (200 <= this.status < 300) resolve(new Response(data = this.response, xhr = xhr))
+        else reject(new Response(error = this.statusText, xhr = xhr))
+    xhr.onerror = -> reject(new Response(error = Error('Network failed'), xhr = xhr))
+    xhr.send();
+}
+
+// 3 from 104 lines and 2936 chars to 77 lines and 2379 chars
+WaterStream = resolver -> {
+    state = 'pending'
+    value
+    deferred = null
+    spread = false
+
+    this.isFulfilled = () -> state == 'fulfilled'
+    this.isPending = () -> state == 'pending'
+    this.isRejected = () -> state == 'fulfilled'
+    this.isResolved = () -> state == 'resolved'
+
+    resolve = newValue -> try {
+        if newValue and newValue.then is Function:
+            return newValue.then(resolve, reject)
+        state = 'resolved'
+        value = newValue
+
+        if deferred:
+            handle(deferred)
+    } catch (e) reject(e)
+
+    reject = reason -> {
+        state = 'rejected'
+        value = reason
+
+        if deferred:
+            handle(deferred);
+    }
+
+    handle = handler -> {
+        if state === 'pending':
+            return deferred = handler;
+        setTimeout(() -> {
+            handlerCallback = if (isRes = state === 'resolved'): handler.onResolved else handler.onRejected;
+
+            if !handlerCallback:
+                return handler[if isRes: 'resolve' else 'reject'](value)
+
+            try {
+                ret = handlerCallback(value);
+                if spread:
+                    handler.resolve.apply(this, ret);
+                else handler.resolve(ret);
+                spread = false;
+            } catch (e)
+                handler.reject(e)
+            state = 'fulfilled'
+        }, 1)
+    }
+
+    this.then = (onResolved, onRejected) -> new WaterStream(function (resolve, reject) -> handle({
+        onResolved: onResolved
+        onRejected: onRejected
+        resolve: resolve
+        reject: reject
+    }))
+    this.catch = (onRejected, onReject) -> {
+        if arguments.length <= 1: return new WaterStream((resolve, reject) -> handle({
+            onResolved: undefined
+            onRejected: onRejected
+            resolve: resolve
+            reject: reject
+        }))
+        else if value is onRejected: return this.catch(onReject);
+        else return this.catch();
+    };
+    this.try = (onResolved, onRejected) -> this.then(onResolved).catch(onRejected)
+    this.spread = (onResolved, onRejected) -> {
+        spread = true;
+        return this.then(onResolved, onRejected)
+    }
+    this.callback = function (cb, ctx) ->
+        if !(cb is Function): return this;
+        else this.then(value -> cb.call(ctx, null, value)).catch(reason -> cb.call(ctx, reason))
+
+    resolver(resolve, reject)
+}
