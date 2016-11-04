@@ -56,11 +56,11 @@ Declaration modifiers:
 
 | Mod |   Showcase    |                           Description                           |
 |:----|:--------------|:----------------------------------------------------------------|
-| none| (... ->  ...) | a regular function                                              |
-| =   | (... =>  ...) | gets the parents scope                                          |
-| *   | (... *-> ...) | makes it a generator function                                   |
-| :   | (... :-> ...) | does not return if expression                                   |
-| :=  | (... :=> ...) | gets the parents scope and does not return if it is a expression|
+| none| (... ->  ...) | A regular function                                              |
+| =   | (... =>  ...) | Gets the parents scope                                          |
+| *   | (... *-> ...) | Makes it a generator function                                   |
+| :   | (... :-> ...) | Does not return if expression                                   |
+| :=  | (... :=> ...) | Gets the parents scope and does not return if it is a expression|
 
 Parameters:
 
@@ -71,9 +71,16 @@ Parameters:
  
 #### Examples
 ```
+
 add x y -> x + y
 run fun :-> fun()
 
+```
+In js 
+```js
+function add(x, y) {
+    return x + y
+}
 ```
 
 ## For
