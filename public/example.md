@@ -97,7 +97,7 @@ for (initialization; condition; afterthought) [$]
 ```
 val ex = { hello: "world", well: 'hi you' }
 
-val arr = [for var { key, value } in ex: ]
+val exKeys = [ for var { key, value } in ex: key ]
 ```
 
 ## Switch
