@@ -63,6 +63,7 @@ Declaration modifiers:
 | :=  | (... :=> ...) | gets the parents scope and does not return if it is a expression|
 
 Parameters:
+
 1. Can be named (can not be used by javascript)
 2. Can have default value
 3. Can have the same value as another parameter by using a colon before parameter name
