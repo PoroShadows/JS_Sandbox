@@ -81,6 +81,9 @@ In js
 function add(x, y) {
     return x + y
 }
+function run(fun) {
+    fun()
+}
 ```
 
 ## For
