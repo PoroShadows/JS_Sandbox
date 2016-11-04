@@ -1,0 +1,82 @@
+<% var rowSize = rowSize || 100, cellSize = cellSize || 8, interval = interval || 100, limit = limit || -1 %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="rowSize" content="<%= rowSize%>">
+    <meta name="interval" content="<%= interval%>">
+    <meta name="limit" content="<%= limit%>">
+    <title>Test</title>
+    <style>
+        body {
+            margin: 0;
+        }
+        .row {
+            height: <%= cellSize%>px;
+        }
+        .row div {
+            display: inline-block;
+            height: <%= cellSize%>px;
+            width: <%= cellSize%>px;
+        }
+
+        .row div.active {
+            background-color: white;
+        }
+
+        .row div.inactive {
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+<script async>
+    let getMetaNumber = from => parseInt(document.querySelector(`meta[name=${from}]`).attributes.content.textContent)
+
+    let body = document.querySelector('body')
+    let rowCount = 0
+    let rowLength = getMetaNumber('rowSize')
+    let interval = getMetaNumber('interval')
+    let limit = getMetaNumber('limit')
+
+
+    let doRow = () => limit == -1 || limit == Infinity || limit > rowCount ? makeRow() : undefined
+
+    let makeRow = () => {
+        let rowE = document.createElement('div')
+        rowE.classList.add('row')
+        for (let cell = 0, cellE = document.createElement('div'); cell < rowLength; cell++, rowE.appendChild(cellE), cellE = document.createElement('div'))
+            if (rowCount == 0)
+                cellE.classList.add(Math.floor(Math.random() * 10000) % 2 ? 'active' : 'inactive')
+            else
+                fromRule(cellE, cell, rowCount)
+        rowCount++
+        body.appendChild(rowE)
+    }
+
+    let fromRule = (cellE, cell, row) => {
+        let lastRow = document.querySelectorAll('body > div.row')[row-1]
+        let leftActive = (cell - 1 < 0 ? lastRow.childNodes[lastRow.childNodes.length - 1] : lastRow.childNodes[cell - 1]).className === 'active' ? 1 : 0
+        let rightActive = (cell + 1 > rowLength-1 ? lastRow.childNodes[0] : lastRow.childNodes[cell + 1]).className === 'active' ? 1 : 0
+        let middleActive = lastRow.childNodes[cell].className === 'active' ? 1 : 0
+
+        let state = setCellState.bind(null, cellE, leftActive, middleActive, rightActive)
+
+        state([0,0,0], true)
+        state([0,0,1], false)
+        state([0,1,0], true)
+        state([0,1,1], true)
+        state([1,0,0], false)
+        state([1,0,1], true)
+        state([1,1,0], true)
+        state([1,1,1], false)
+    }
+
+    let setCellState = (cell, left, middle, right, rule, state) => rule[0] === left && rule[1] === middle && rule[2] === right ?
+            cell.classList.add(state ? 'active' : 'inactive') :
+            undefined
+
+    setInterval(doRow, interval)
+</script>
+</body>
+</html>

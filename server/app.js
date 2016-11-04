@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var join = require('path').join;
 
 var app = express();
+console.log(2);
 
 app.set('views', join(__dirname, 'views'));
 app.set('view engine', 'ejs');

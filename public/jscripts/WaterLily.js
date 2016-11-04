@@ -69,21 +69,17 @@ const each = (obj, fn, opts) => {
         thisArg: obj,
         mustOwn: true
     })
-    let idx = 0, name = '', gather = []
+    let idx = 0, name = '', next = {}, gather = []
 
     if (opts.runIf) {
-        const run = function () {
-            return opts.predicate.apply(null, arguments) ?
-                gather.push(fn.apply(opts.thisArg, arguments)) :
-                gather.push(null)
-        }
-        if (is(obj, Array) || is(obj, String)) for (; idx < obj['length']; idx++) run(obj[idx], idx, obj)
-        else if (is(obj, Number)) for (; idx < obj; idx++) run(idx, obj)
-        else if (is(obj, Object)) {
-            for (name in obj) //noinspection JSUnfilteredForInLoop
-                if (!opts.mustOwn || opts.mustOwn && obj.hasOwnProperty(name)) //noinspection JSUnfilteredForInLoop
-                    run(name, obj[name], obj)
-        } else if (is(obj, Boolean) && obj) run()
+        const run = (...args) => gather.push(opts.predicate(...args) ? fn.apply(opts.thisArg, args) : null)
+
+        if (is(obj, Array) || is(obj, String)) for (; idx < obj['length']; idx++)                   run(obj[idx], idx, obj)
+        else if (is(obj, Number)) for (; idx < obj; idx++)                                          run(idx, obj)
+        else if (is(obj, Object)) if (!opts.mustOwn || opts.mustOwn && obj.hasOwnProperty(name))    run(name, obj[name], obj)
+        else if (is(obj, Boolean) && obj)                                                           run(obj)
+        else if ('Symbol' in window && is(obj, Symbol)) while (!(next = obj.next()).done)           run(next.value, next.done, obj)
+
         if (gather.filter(item => !is(item, Object)).length == 0) {
             let temp = {}
             for (let i = 0, obj = gather[i]; i < gather.length; i++, obj = gather[i])
@@ -465,21 +461,30 @@ WaterStream.promisify = (fn, argumentCount, hasErrorPar) => {
  * @param {Element...|String...|Array.<Element|String>...} [content]
  * @returns {Element|Element[]|WaterStream}
  */
-function WaterLily(select, data, content) {
-    if (is(select, String))
-        return (() => /\s+|^<.*>$/g.test(select) || is(data, null) || is(data, Object) ?
-            WaterLily.create.apply(null, arguments) :
-            WaterLily.find(select, data))()
-    else if (is(select, Function)) {
-        switch (select.length) {
-            case 0:
-            case 1:
-                window.addEventListener('DOMContentLoaded', select)
-                break
-            case 2:
-                return new WaterStream(select)
+const WaterLily = function (select, data, content) {
+    return new (function () {
+        if (is(select, String))
+            return /\s+|^<.*>$/g.test(select) || is(data, null) || is(data, Object) ?
+                WaterLily.create.apply(null, arguments) :
+                WaterLily.find(select, data)
+        else if (is(select, Function))
+            switch (select.length) {
+                case 0:
+                case 1:
+                    window.addEventListener('DOMContentLoaded', select)
+                    break
+                case 2:
+                    return new WaterStream(select)
+            }
+        else if (is(select, Array)) {
+
         }
-    } else if (is(select, Array)) {
+    })(select, data, content)
+}
+WaterLily.prototype = {
+    length: 0,
+    constructor: WaterLily,
+    get: function () {
 
     }
 }
@@ -555,20 +560,22 @@ WaterLily.create = function (tagName, attributes, content) {
         tagName = attribs.splice(0, 1)[0]
         each(attribs,
             function (item) {
-            key = this(attrs,
-                key ? key : /=+/.test(item) ? (item = item.split(/=/)).splice(0, 1)[0] : item,
-                key ? item : Array.isArray(item) ? item.join('=').replace(/^"|^'/g, '') : ''
-            );
-        },
-            { thisArg: (attrs, key, value) => {
-                attrs[key] = (attrs.hasOwnProperty(key) ? attrs[key] + ' ' : '') + value;
-                if (!value) return '';
-                if (/"$|'$/g.test(value)) {
-                    attrs[key] = attrs[key].replace(/"$|'$/g, '');
-                    return '';
-                }
-                return key;
-            }, runIf: !/^(\s?)+$/.test(attribs.join(' ')) })
+                key = this(attrs,
+                    key ? key : /=+/.test(item) ? (item = item.split(/=/)).splice(0, 1)[0] : item,
+                    key ? item : Array.isArray(item) ? item.join('=').replace(/^"|^'/g, '') : ''
+                );
+            },
+            {
+                thisArg: (attrs, key, value) => {
+                    attrs[key] = (attrs.hasOwnProperty(key) ? attrs[key] + ' ' : '') + value;
+                    if (!value) return '';
+                    if (/"$|'$/g.test(value)) {
+                        attrs[key] = attrs[key].replace(/"$|'$/g, '');
+                        return '';
+                    }
+                    return key;
+                }, runIf: !/^(\s?)+$/.test(attribs.join(' '))
+            })
         attributes = defineProps(attributes || {}, attrs)
     }
     const elem = document.createElement(tagName)
@@ -630,7 +637,7 @@ WaterLily.ajax = (url, req) => new WaterStream((resolve, reject) => {
 /**
  * @param {NodeList|Element...|String} element
  * @constructor
-function Change(element) {
+ function Change(element) {
     element = is(element, String) ? WaterLily.find(element) : element;
     this.__elements = is(element, NodeList) ? element : Array.prototype.slice.call(arguments, 0);
 
@@ -660,17 +667,17 @@ function Change(element) {
 
     /!**
      *
-     * @param {String|Array.<String>|Object} name
-     * @param {String|Number|Boolean|Function} [value]
-     * @returns {Change}
-     *!/
-    this.css = (name, value) => template(this, 'style', name, value)
-    this.attr = (name, value) => template(this, 'attributes', name, value)
-    /!**
-     * @param {Number} [idx]
-     * @returns {Element|Array.<Element>}
-     *!/
-    this.get = idx => {
+ * @param {String|Array.<String>|Object} name
+ * @param {String|Number|Boolean|Function} [value]
+ * @returns {Change}
+ *!/
+ this.css = (name, value) => template(this, 'style', name, value)
+ this.attr = (name, value) => template(this, 'attributes', name, value)
+ /!**
+ * @param {Number} [idx]
+ * @returns {Element|Array.<Element>}
+ *!/
+ this.get = idx => {
         const elements = this.__elements;
         return (
             !!idx ?
@@ -684,14 +691,14 @@ function Change(element) {
                     elements
         );
     }
-}
+ }
 
-/!**
+ /!**
  *
  * @param {NodeList|Element...|String} element
  * @returns {Change}
  *!/
-WaterLily.change = element => new Change(element)*/
+ WaterLily.change = element => new Change(element)*/
 
 /**
  * Make asynchronous code look like synchronous
@@ -711,12 +718,86 @@ const flow = generator => {
     return iterate(iterator.next())
 }
 
-function Delta() {
-    if (typeof this === 'function')
-        throw new TypeError('Only new routes are allowed')
-    this.__routes = {}
-    this.__current = null
-    //TODO Do implementation
+/**
+ *
+ * @return {{go: go, init: init, remove: remove, addRoute: (function(RegExp, Element))}}
+ * @constructor
+ */
+const Delta = function () {
+    let routes = {}
+    let searchAttribute = 'route'
+    let inTransition = false
+    let currentView, newView
+
+    function onChanged() {
+        const path = window.location.pathname
+        const regRoutes = Object.keys(routes)
+        const route = regRoutes.find(x => x.test(path))
+        const data = route.exec(path)
+
+        if (!route) return WaterStream.reject(new Error("Could not find a matching route"))
+
+        newView = routes[route]
+
+        if (inTransition) return WaterStream.resolve()
+        inTransition = true
+
+        let outViewPromise = Promise.resolve()
+
+        if (currentView) {
+            if (currentView === newView) {
+                inTransition = false
+                return currentView.update(data)
+            }
+            outViewPromise = currentView.out(data)
+        }
+
+        return outViewPromise.then(_ => {
+            currentView = newView
+            inTransition = false
+            return newView.in(data)
+        })
+    }
+
+    const clearRoutes = () => routes = {}
+    const addRoute = (regExp, view) => {
+        if (routes.hasOwnProperty(regExp))
+            return console.warn(`Route already exists: ${regExp}`)
+        view.update = view.update || WaterStream.resolve()
+        view.in = view.in || WaterStream.resolve()
+        view.out = view.out || WaterStream.resolve()
+        routes[regExp] = view
+    }
+
+    function addRoutes() {
+        each(document.querySelectorAll(`[${searchAttribute}]`),
+            view => addRoute(new RegExp(view.getAttribute(searchAttribute), 'i'), view),
+            { thisArg: this, predicate: view => !view.getAttribute(searchAttribute) })
+    }
+
+    function init(attribute) {
+        searchAttribute = attribute || searchAttribute
+        window.addEventListener('popstate', onChanged)
+        clearRoutes()
+        addRoutes()
+        onChanged()
+    }
+
+    function remove() {
+        window.removeEventListener('popstate', onChanged)
+    }
+
+    function go(url) {
+        window.history.pushState(null, null, url)
+        return onChanged()
+    }
+
+    return {
+        go,
+        init,
+        remove,
+        addRoute
+    }
 }
 
 /*if (arguments[2].constructor.name === 'Module')
