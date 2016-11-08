@@ -6,31 +6,30 @@
 
 // variable
 
-// prefix variable with mut to make it mutable
-// must be something at initialization
+// var is mutable while val is immutable
 
-token
+var name /*= undefined*/
+val name /*= undefined*/
 
 
 // number
-token = 0
+val name = 0
 
 
 // string
 
 // interpolation is "${token}"
 
-token = ''
-token = ""
+val name = ''
+val name = ""
 
 
 // array
 
 // can be on multiple lines
-// can omit brackets (not when empty or range)
+// can omit brackets
 
-token = [item1, item2, ..., itemN]
-token = [x..n] // x to n values
+val name = [item1, item2, ..., itemN]
 
 
 // object
@@ -38,29 +37,36 @@ token = [x..n] // x to n values
 // can be on multiple lines
 // can omit braces (not when empty) and commas
 
-token = {}
-token = { name: value }
-token = { n1: v1, n2: v2 }
+val name = {}
+val name = { name: value }
+val name = { n1: v1, n2: v2 }
 
 
 // function
 
-// everything can be on new lines
-// args can have default values (arg1, arg2 = some value)
-// if the value starts with colon you can select a parameter [(arg1, thisArg = :arg1) -> ...]
-// named parameters and [(arg2 = 'value')]
-// can omit parentheses if only one parameter
-// function ([token () -> ...] becomes [function token() ...]) if no equals variable ([token = () -> ...] becomes [token = function () ...])
-// in multiline block you can omit return when you want to return
+// can omit the return if expression is at the of the block
+// declaration modifiers:
+//| mod |   showcase    |                           description                           |
+//-----------------------------------------------------------------------------------------
+//|none | (... ->  ...) | a regular function
+//|  =  | (... =>  ...) | gets the parents scope
+//|  *  | (... *-> ...) | makes it a generator function
+//|  :  | (... :-> ...) | does not return if expression
+//| :=  | (... :=> ...) | gets the parents scope and does not return if it is a expression
+// parameters:
+// 1. can be named (can not be used by javascript)
+// 2. can have default value
+// 3. can have the same value as another parameter by using a colon before parameter name
+// 4. can omit parentheses around parameters
 
-token (par1, par2, ..., parN) -> [expression with return or { multiline block }]
+[nothing, var or val] name (par1 par2 ... parN) -> [expression or { block }]
 
 
 // for
 
 // everything can be on new lines
 // can omit parentheses (must end with colon [for ...: ...])
-// $ = expression or { multiline block }
+// $ = expression or { block }
 // if value is a object then token is the current name/key and i is the current value
 // if value is a array or string then token is the current value and i is the current index
 // if value is a range then token is the current number

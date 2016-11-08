@@ -6,8 +6,8 @@ module.exports = exports = function (app) {
     /////////////////////////////////////////////////////////////////
     // Handle GET request routes
 
-    app.get('/', function (req, res) {
-        res.render('index', {});
+    app.get('/automata', function (req, res) {
+        res.render('automata', req.query);
     });
 
     app.get('/kano', function (req, res) {
