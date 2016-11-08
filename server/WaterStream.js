@@ -1,7 +1,10 @@
+'use strict'
 /**
  * WaterStream is a Promise polyfill
  *
- * @param {function(resolve, reject)} resolver
+ * The function onCancel takes a function that runs when the promise is canceled
+ *
+ * @param {function(resolve, reject, onCancel)} resolver
  * @returns {WaterStream}
  * @public
  * @constructor
@@ -10,7 +13,7 @@ function WaterStream(resolver) {
     let state = 'pending',
         value,
         deferred,
-        spread = false
+        cancellationFunction
 
     //noinspection JSUnusedGlobalSymbols
     /**
@@ -44,10 +47,14 @@ function WaterStream(resolver) {
      * @public
      */
     this.isResolved = () => state == 'resolved'
-    this.stop = () => {
-        throw ReferenceError('Not implemented')
-    }
+    /**
+     * Returns if the promise is cancelable
+     *
+     * @returns {Boolean}
+     */
+    this.isCancelable = () => cancellationFunction != undefined
 
+    const onCancel = fn => cancellationFunction = fn
     const resolve = newValue => {
         try {
             if (newValue && typeof newValue.then === 'function')
@@ -73,17 +80,14 @@ function WaterStream(resolver) {
             return deferred = handler;
         setTimeout(() => {
             const isResolved = state === 'resolved',
-                handlerCallback = isResolved ? handler.onResolved : handler.onRejected
+                handlerFN = isResolved ? handler.onResolved : handler.onRejected
 
-            if (!handlerCallback)
+            if (!handlerFN)
                 return handler[isResolved ? 'resolve' : 'reject'](value)
 
             let ret
             try {
-                if (spread)
-                    ret = handlerCallback.apply(this, value.constructor === Array ? value : [value])
-                else ret = handlerCallback(value)
-                spread = false
+                ret = handlerFN(value)
                 if (!this.isFulfilled())
                     handler.resolve(ret)
             } catch (e) {
@@ -107,7 +111,7 @@ function WaterStream(resolver) {
         onRejected: onRejected,
         resolve: resolve,
         reject: reject
-    }));
+    }))
     /**
      * Can be useful for error handling in your promise
      * composition.
@@ -116,17 +120,19 @@ function WaterStream(resolver) {
      * Catch only if it is a specific error *.catch(type, onRejected)
      *
      * @param {function(reason)|Function} [onRejected]
-     * @param {function(reason)} [onReject]
+     * @param {function(reason)} [fn]
      * @returns {WaterStream}
      * @public
      */
-    this.catch = (onRejected, onReject) => arguments.length <= 1 ? new WaterStream((resolve, reject) => handle({
+    this.catch = (onRejected) => new WaterStream((resolve, reject) => handle({
         onResolved: undefined,
         onRejected: onRejected,
         resolve: resolve,
         reject: reject
-    })) :
-        value == onRejected ? this.catch(onReject) : this.catch();
+    }))
+
+
+
     /**
      * NOT STANDARD
      * Do not expect this to work in other Promise libraries.
@@ -143,22 +149,6 @@ function WaterStream(resolver) {
      * NOT STANDARD
      * Do not expect this to work in other Promise libraries.
      *
-     * If value is an array spread the arguments.
-     * Else nothing function as normal then
-     *
-     * @param {function(value)} [onResolved]
-     * @param {function(reason)} [onRejected]
-     * @returns {WaterStream}
-     * @public
-     */
-    this.spread = (onResolved, onRejected) => {
-        spread = true;
-        return this.then(onResolved, onRejected)
-    }
-    /**
-     * NOT STANDARD
-     * Do not expect this to work in other Promise libraries.
-     *
      * Make a callback from the promise.
      *
      * @param {Function} cb
@@ -171,8 +161,22 @@ function WaterStream(resolver) {
         this.then(value => cb.call(ctx, null, value))
             .catch(reason => cb.call(ctx, reason))
     }
+    /**
+     * NOT STANDARD
+     *
+     * Cancel this promise if it is cancelable
+     */
+    this.cancel = () => {
+        if (this.isCancelable()) {
+            cancellationFunction()
+            state = 'canceled'
+        } else return this
+    }
 
-    resolver(resolve, reject);
+
+
+    //noinspection JSCheckFunctionSignatures
+    resolver(resolve, reject, onCancel)
 }
 
 /**
@@ -198,6 +202,7 @@ function WaterStream(resolver) {
  */
 WaterStream.all = iterable => new WaterStream((resolve, reject) => {
     const values = [];
+    console.log(iterable.next);
     iterable = iterable.map(item => item && typeof item.then === 'function' ? item : WaterStream.resolve(item))
     for (let i = 0; i < iterable.length; i++)
         iterable[i].then(value => {
@@ -279,27 +284,22 @@ WaterStream.promisify = (fn, argumentCount, hasErrorPar) => {
         });
     }
 }
-
 /**
  * Make asynchronous code look like synchronous
  *
- * @param {Generator|Function} generator
+ * @param {Generator|Function} co
  * @returns {WaterStream}
  */
-const flow = generator => {
-    const iterator = generator(),
+WaterStream.flow = co => {
+    const iterator = co(),
         iterate = iteration => {
             if (iteration.done) return iteration.value
             const value = iteration.value
             return typeof value.then === 'function' ?
-                value.then(v => iterate(iterator.next(v))) :
+                value.then(val => iterate(iterator.next(val))) :
                 WaterStream.resolve(iterate(iterator.next(value)))
         }
     return iterate(iterator.next())
 }
 
-//noinspection JSUnresolvedVariable,JSReferencingArgumentsOutsideOfFunction
-if (arguments && arguments[2].constructor.name === 'Module')
-    module.exports = { WaterStream, flow }
-
-//export default { WaterStream, flow }
+module.exports = WaterStream

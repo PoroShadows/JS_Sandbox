@@ -6,12 +6,15 @@ module.exports = exports = function (app) {
     /////////////////////////////////////////////////////////////////
     // Handle GET request routes
 
+    app.get('/', function (req, res) {
+        res.render('index')
+    })
+
     app.get('/automata', function (req, res) {
-        res.render('automata', req.query);
-    });
+        res.render('automata', req.query)
+    })
 
     app.get('/kano', function (req, res) {
-        debug('fragment' in req.query);
         res.render('kano', {
             newsInfo: [
                 { id: 45, date: "2016/8/19", preview: "Newシングル「nameless」発売記念 ツイキャス特番 9月8日21時から放送決定　※9/6更新" },
@@ -22,8 +25,8 @@ module.exports = exports = function (app) {
                 { id: 67, date: "2016/8/12", preview: "New Single「nameless」発売記念 特典お渡し会 開催決定" },
                 { id: 66, date: "2016/6/12", preview: "鹿乃 ファーストライブ「ばんび～の」​ チケット一般発売開始" }
             ]
-        });
-    });
+        })
+    })
 
     /////////////////////////////////////////////////////////////////
     // Error catching/handling

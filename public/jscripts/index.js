@@ -17,7 +17,7 @@ function render(html) {
         return arr
     }
     const element = start => {
-        if (!is(start, Object, true)) return start
+        if (!WaterLily.is(start, Object, true)) return start
         let res = WaterLily.create(start.element)
         for (let i = 0; i < start.children.length; i++)
             res.appendChild(element(start.children[i]))

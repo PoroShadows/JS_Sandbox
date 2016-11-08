@@ -54,13 +54,14 @@ Can omit the return if expression is at the of the block
 
 Declaration modifiers:
 
-| Mod |   Showcase    |                           Description                           |
-|:----|:--------------|:----------------------------------------------------------------|
-| none| (... ->  ...) | A regular function                                              |
-| =   | (... =>  ...) | Gets the parents scope                                          |
-| *   | (... *-> ...) | Makes it a generator function                                   |
-| :   | (... :-> ...) | Does not return if expression                                   |
-| :=  | (... :=> ...) | Gets the parents scope and does not return if it is a expression|
+| Mod |   Showcase     |                           Description                           |
+|:----|:---------------|:----------------------------------------------------------------|
+| none| (... ->   ...) | A regular function                                              |
+| =   | (... =>   ...) | Gets the parents scope                                          |
+| *   | (... *->  ...) | Makes it a generator function                                   |
+| :   | (... :->  ...) | Does not return if expression                                   |
+| :=  | (... :=>  ...) | Gets the parents scope and does not return if it is a expression|
+| :*  | (... :*-> ...) | Makes a generator that does not return                          |
 
 Parameters:
 
@@ -68,13 +69,12 @@ Parameters:
 2. Can have default value
 3. Can have the same value as another parameter by using a colon before parameter name
 4. Can omit parentheses around parameters
- 
+
 #### Examples
 ```
-
 add x y -> x + y
 run fun :-> fun()
-
+count :*-> for i in 1..0xff: yield i
 ```
 In js 
 ```js
@@ -83,6 +83,11 @@ function add(x, y) {
 }
 function run(fun) {
     fun()
+}
+function* count() {
+    for (let i = 0; i < 0xff; i++) {
+        yield i;
+    }
 }
 ```
 
@@ -96,8 +101,7 @@ for (initialization; condition; afterthought) [$]
 #### Examples
 ```
 val ex = { hello: "world", well: 'hi you' }
-
-val exKeys = [ for var { key, value } in ex: key ]
+val exKeys = [ for var [key, value] in ex: key ]
 ```
 
 ## Switch
