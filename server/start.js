@@ -11,7 +11,7 @@ require('./WaterStream').flow(function *() {
         return isNaN(port) ? val : port >= 0x0000 && port <= 0xffff ? port : false
     })(process.env.PORT || '8080')
     const server = yield WaterStream.all([
-        readFile(join('key.pem')),
+        readFile(join('key.pe')),
         readFile(join('server.crt'))
     ]).spread((key, cert) => require('https').createServer({ key, cert }, app)).catch(() => require('http').createServer(app))
 

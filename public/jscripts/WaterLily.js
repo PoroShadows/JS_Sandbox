@@ -615,9 +615,10 @@ WaterLily.ajax = (url, req) => new WaterStream((resolve, reject) => {
     const xhr = new XMLHttpRequest, encode = encodeURIComponent
     xhr.responseType = req.type || ''
     each(req.headers, xhr.setRequestHeader)
-    const params = each(req.query,
+    let params = each(req.query,
         (name, value) => `${this.indexOf(name) == 0 ? '?' : '&'}${encode(name)}=${encode(value)}`,
-        { thisArg: Object.keys(req.query), gather: true }).join('')
+        { thisArg: Object.keys(req.query), gather: true })
+    params = is(params, Array) ? params.join('') : ''
     xhr.open(req.method, url + params, req.async, req.user, req.password)
     //noinspection SpellCheckingInspection
     xhr.onload = () => 200 <= xhr.status < 300 ?
