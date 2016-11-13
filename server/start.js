@@ -1,31 +1,28 @@
 'use strict'
-const WaterStream = require('./WaterStream')
-WaterStream.flow(function *() {
+const Bound = require('./../public/jscripts/Bound')
+Bound.flow(function *() {
     const debug = require('debug')('Server:Sandbox')
     const app = require('./app')
 
-    const join = require('path').join.bind(null, __dirname, '..')
-    const readFile = WaterStream.promisify(require('fs').readFile)
+    const readFile = Bound.promisify(require('fs').readFile)
 
     const port = (val => {
         const port = parseInt(val, 10)
         return isNaN(port) ? val : port >= 0x0000 && port <= 0xffff ? port : false
     })(process.env.PORT || '8080')
 
-    const files = yield WaterStream.all([
-        readFile(join('key.pe'), 'utf-8'),
-        readFile(join('server.crt'), 'utf-8')
-    ]).then(t => t).catch(reason => console.error(reason))
+    const paths = ['key.pem', 'server.crt']
+    let server
 
-    console.log('hi:', Array.isArray(files), files)
-/*
-    const server = yield WaterStream.all([
-        readFile(join('key.pe')),
-        readFile(join('server.crt'))
-    ]).then((files) => require('https').createServer({ key: files[0], cert: files[1] }, app)).catch(() => require('http').createServer(app))
-
-
-
+    try {
+        const files = yield Bound.all(function* () {
+            for (let i = 0; i < paths.length; i++)
+                yield readFile(require('path').join(__dirname, '..', paths[i]), 'utf-8')
+        })
+        server = require('https').createServer({ key: files[0], cert: files[1] }, app)
+    } catch (e) {
+        server = require('http').createServer(app)
+    }
 
     server.listen(port)
     server.on('error', error => {
@@ -39,7 +36,7 @@ WaterStream.flow(function *() {
             ? 'pipe ' + address
             : 'port ' + address.port
         debug('Listening on ' + bind)
-    })*/
+    })
 }).catch(error => {
     console.error(error)
     process.exit(1)

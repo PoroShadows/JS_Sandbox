@@ -1,7 +1,7 @@
 var express = require('express');
-var join = require('path').join;
-var debug = require('debug')('Server:Sandbox');
-module.exports = exports = function (app) {
+var join = require('path').join
+var debug = require('debug')('Server:Sandbox')
+module.exports = function (app) {
 
     /////////////////////////////////////////////////////////////////
     // Handle GET request routes
@@ -40,7 +40,7 @@ module.exports = exports = function (app) {
 
     // Error handler
     app.use(function (err, req, res, next) {
-        res.status(err.status || 500);
+        res.status(err.status || 500)
         res.render('error', {
             message: err.message,
             error: app.get('env') === 'development' ?
@@ -48,11 +48,11 @@ module.exports = exports = function (app) {
                 err :
                 // Production environment without error stacktrace
                 {}
-        });
-    });
+        })
+    })
 
     /////////////////////////////////////////////////////////////////
     // Static routes
 
 
-};
+}
