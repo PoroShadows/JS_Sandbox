@@ -20,12 +20,11 @@ Bound.flow(function *() {
                 yield readFile(require('path').join(__dirname, '..', paths[i]), 'utf-8')
         })
         require('http').createServer(require('redirect-https')()).listen(80)
-        server = require('https').createServer({ key: files[0], cert: files[1] }, app)
+        server = require('spdy').createServer({ key: files[0], cert: files[1] }, app).listen(443)
     } catch (e) {
-        server = require('http').createServer(app)
+        server = require('http').createServer(app).listen(80)
     }
 
-    server.listen(443)
     server.on('error', error => {
         const bind = (typeof port === 'string' ? 'Pipe ' : 'Port ') + port
         throw error.code === 'EACCES' ? bind + ' requires elevated privileges' :
