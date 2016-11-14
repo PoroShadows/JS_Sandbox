@@ -9,13 +9,18 @@
   "author": "Martin Hövre",
   "license": "MIT",
   "dependencies": {
+    "babel-preset-react": "^6.16.0",
     "bcryptjs": "^2.3.0",
     "body-parser": "^1.15.2",
     "cookie-parser": "^1.4.3",
     "debug": "^2.2.0",
     "ejs": "^2.5.1",
     "express": "^4.14.0",
+    "le-challenge-fs": "^2.0.8",
+    "le-store-certbot": "latest",
+    "letsencrypt-express": "^2.0.5",
     "morgan": "^1.7.0",
+    "redirect-https": "latest",
     "stylus": "^0.54.5"
   },
   "devDependencies": {
@@ -25,6 +30,7 @@
     "gulp": "^3.9.1",
     "gulp-concat": "^2.6.0",
     "gulp-sourcemaps": "^1.6.0",
+    "gulp-stylus": "^2.6.0",
     "gulp-uglify": "^2.0.0",
     "pump": "^1.0.1"
   }

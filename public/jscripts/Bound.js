@@ -512,7 +512,7 @@ Bound.flow = function (co) {
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
     module.exports = Bound
 else//noinspection JSUnresolvedVariable
-if (typeof define === 'function' && define.amd) //noinspection JSUnresolvedFunction
+if (typeof define === 'function' && define.amd) //noinspection JSUnresolvedFunction,JSCheckFunctionSignatures
     define([], function () {
         return Bound
     })
