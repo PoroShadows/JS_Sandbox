@@ -1,3 +1,4 @@
+
 /**
  * Bound is a Promise polyfill
  *
@@ -57,7 +58,7 @@ function Bound(resolver) {
      * @public
      */
     this.isRejected = function () {
-        return state == 'fulfilled'
+        return state == 'rejected'
     }
     //noinspection JSUnusedGlobalSymbols
     /**
@@ -367,8 +368,10 @@ Bound.all = function (iterable) {
         if (typeof iterable === 'function' && typeof iterable().next === 'function' || typeof iterable.next === 'function') {
             //noinspection JSValidateTypes
             var iterator = typeof iterable.next === 'function' ? iterable : iterable()
+            //noinspection JSUnresolvedVariable
             do {
                 var iteration = iterator.next()
+                //noinspection JSUnresolvedVariable
                 if (!iteration.done) each(iteration.value)
             } while (!iteration.done)
         }
@@ -406,8 +409,10 @@ Bound.race = function (iterable) {
         if (typeof iterable === 'function' && typeof iterable().next === 'function' || typeof iterable.next === 'function') {
             //noinspection JSValidateTypes
             var iterator = typeof iterable.next === 'function' ? iterable : iterable()
+            //noinspection JSUnresolvedVariable
             do {
                 var iteration = iterator.next()
+                //noinspection JSUnresolvedVariable
                 if (!iteration.done) each(iteration.value)
             } while (!iteration.done)
         }
@@ -489,24 +494,25 @@ Bound.promisify = function (fn, argumentCount, hasErrorPar) {
  * Pass arguments the the first execution of the
  * generator after the first parameter.
  *
- * @param {Generator|Function} co
+ * @param {Generator|Function} generator
  * @returns {Bound}
  * @public
  */
-Bound.flow = function (co) {
+Bound.flow = function (generator) {
     var args = Array.prototype.splice.call(arguments, 1)
-    if (typeof co === 'function') //noinspection JSUnresolvedFunction
-        co = co.apply(this, args)
+    if (typeof generator === 'function') //noinspection JSUnresolvedFunction
+        generator = generator.apply(this, args)
     var iterate = function (iteration) {
+        //noinspection JSUnresolvedVariable
         if (iteration.done) return Bound.resolve(iteration.value)
-        return Bound.resolve(iteration.value)
+        return Bound[Array.isArray(iteration.value) ? 'all' : 'resolve'](iteration.value)
             .then(exec.bind('next'))
             .catch(exec.bind('throw'))
     }
     function exec(val) {
-        return iterate(co[this](val))
+        return iterate(generator[this](val))
     }
-    return iterate(co.next())
+    return iterate(generator.next())
 }
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')

@@ -1,99 +1,22 @@
-/*(function () {
+if (typeof Object.assign != 'function') {
+    (function () {
+        Object.assign = function (target) {
+            'use strict';
+            // We must check against these specific cases.
+            if (target === undefined || target === null)
+                throw new TypeError('Cannot convert undefined or null to object')
 
- if ( typeof window.CustomEvent === "function" ) return false;
-
- function CustomEvent ( event, params ) {
- params = params || { bubbles: false, cancelable: false, detail: undefined };
- var evt = document.createEvent( 'CustomEvent' );
- evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
- return evt;
- }
-
- CustomEvent.prototype = window.Event.prototype;
-
- window.CustomEvent = CustomEvent;
- })();*/
-
-
-
-/**
- * @param {NodeList|Element...|String} element
- * @constructor
- function Change(element) {
-    element = is(element, String) ? WaterLily.find(element) : element;
-    this.__elements = is(element, NodeList) ? element : Array.prototype.slice.call(arguments, 0);
-
-    const template = (inst, attribute, name, value) => {
-        if (value === undefined) {
-            let ret
-            const run = name => each.bind(null, inst.__elements,
-                element => this.hasOwnProperty(name) ? this[name].push(element[attribute][name]) : this[name] = [element[attribute][name]],
-                { thisArg: {}, gather: true })
-            if (name === undefined) return inst.__elements[0][attribute];
-            else if (is(name, Array))
-                ret = each(name, name =>
-                        inst.__elements.length == 1 ?
-                        { [name]: inst.__elements[0][attribute][name] } :
-                        { [name]: run(name) },
-                    { gather: true })
-            else if (is(name, String))
-                ret = run(name)[name]
-            else {
-
-                return this;
-            }
-            return is(ret, Array) && ret.length == 1 ? ret[0] : ret;
-        }
-        return this;
-    }
-
-    /!**
-     *
- * @param {String|Array.<String>|Object} name
- * @param {String|Number|Boolean|Function} [value]
- * @returns {Change}
- *!/
- this.css = (name, value) => template(this, 'style', name, value)
- this.attr = (name, value) => template(this, 'attributes', name, value)
- /!**
- * @param {Number} [idx]
- * @returns {Element|Array.<Element>}
- *!/
- this.get = idx => {
-        const elements = this.__elements;
-        return (
-            !!idx ?
-                idx < elements.length ?
-                    idx >= 0 ?
-                        elements[idx] :
-                        elements[0] :
-                    elements[this.__elements.length - 1] :
-                elements.length == 1 ?
-                    elements[0] :
-                    elements
-        );
-    }
- }
-
- /!**
- *
- * @param {NodeList|Element...|String} element
- * @returns {Change}
- *!/
- WaterLily.change = element => new Change(element)*/
-
-
-
-
-
-/*if (arguments[2].constructor.name === 'Module')
- module.exports = {
- WaterLily,
- flow,
- Bound
- }*/
-//noinspection JSDuplicatedDeclaration
-const { WaterLily, Bound, Delta } = (() => {
+            var output = Object(target);
+            for (var index = 1, source = arguments[index]; index < arguments.length; index++, source = arguments[index])
+                if (source !== undefined && source !== null)
+                    for (var nextKey in source)
+                        if (source.hasOwnProperty(nextKey))
+                            output[nextKey] = source[nextKey]
+            return output;
+        };
+    })();
+}
+var _ref = (() => {
     /**
      * Test is the object is a instance of the primitive
      *
@@ -106,18 +29,18 @@ const { WaterLily, Bound, Delta } = (() => {
     const is = (obj, primitive, strict) => {
         return (
             obj == undefined ?
-                primitive == undefined :
+            primitive == undefined :
                 primitive.constructor === Function || primitive.constructor === Object ?
                     strict || false ?
-                        obj.constructor === primitive :
+                    obj.constructor === primitive :
                         primitive.constructor === Array ?
-                            (obj.constructor === Object && 'length' in obj && obj['length'].constructor === Number && obj['length'] - 1 in obj) || true :
+                        (obj.constructor === Object && 'length' in obj && obj['length'].constructor === Number && obj['length'] - 1 in obj) || true :
                             obj.constructor === primitive ?
                                 true :
                                 primitive.isPrototypeOf(obj) :
                     strict || true ?
-                        obj === primitive :
-                        obj == primitive
+                    obj === primitive :
+                    obj == primitive
         )
     }
     /**
@@ -269,12 +192,12 @@ const { WaterLily, Bound, Delta } = (() => {
      * @param {Element...|String...|Array.<Element|String>...} [content]
      * @returns {Element|Element[]|Bound}
      */
-    const WaterLily = function (select, data, content) {
+    const Ash = function (select, data, content) {
         return new (function () {
             if (is(select, String))
                 return /\s+|^<.*>$/g.test(select) || is(data, null) || is(data, Object) ?
-                    WaterLily.create.apply(null, arguments) :
-                    WaterLily.find(select, data)
+                    Ash.create.apply(null, arguments) :
+                    Ash.find(select, data)
             else if (is(select, Function))
                 switch (select.length) {
                     case 0:
@@ -289,9 +212,9 @@ const { WaterLily, Bound, Delta } = (() => {
             }
         })(select, data, content)
     }
-    WaterLily.prototype = {
+    Ash.prototype = {
         length: 0,
-        constructor: WaterLily,
+        constructor: Ash,
         get (idx) {
             return is(idx, Number) ? this[idx] : []
         }
@@ -306,29 +229,29 @@ const { WaterLily, Bound, Delta } = (() => {
      * @public
      * @static
      */
-    WaterLily.find = (selector, context) => {
-        context = is(context, Element) ? context : is(context, String) ? WaterLily.find(context) : document
+    Ash.find = (selector, context) => {
+        context = is(context, Element) ? context : is(context, String) ? Ash.find(context) : document
         const list = context.querySelectorAll(selector)
         return list.length > 1 ? list : list.length == 1 ? list[0] : undefined
     }
     /**
      * Create a element
      *
-     * @param {String} [tagName='div']
+     * @param {String} [tag='div']
      * @param {Object|null} [attributes=null]
      * @param {Element|String|Array.<Element|String>} [content=[]]
      * @returns {Element}
      * @public
      * @static
      */
-    WaterLily.create = function (tagName, attributes, content) {
-        tagName = tagName || 'div'
+    Ash.create = function (tag, attributes, content) {
+        tag = tag || 'div'
         content = is(content, Array) ? content : Array.prototype.slice.call(arguments, 2)
-        if (/\s+|^<.*>$/g.test(tagName)) {
-            tagName = tagName.replace(/^<|>$/g, '')
+        if (/\s+|^<.*>$/g.test(tag)) {
+            tag = tag.replace(/^<|>$/g, '')
             //noinspection SpellCheckingInspection
-            let attribs = tagName.split(/\s/), attrs = {}, key = ''
-            tagName = attribs.splice(0, 1)[0]
+            let attribs = tag.split(/\s/), attrs = {}, key = ''
+            tag = attribs.splice(0, 1)[0]
             each(attribs,
                 function (item) {
                     key = this(attrs,
@@ -347,15 +270,15 @@ const { WaterLily, Bound, Delta } = (() => {
                         return key;
                     }, runIf: !/^(\s?)+$/.test(attribs.join(' '))
                 })
-            attributes = defineProps(attributes || {}, attrs)
+            attributes = Object.assign(attrs, attributes || {})
         }
-        const elem = document.createElement(tagName)
+        const elem = document.createElement(tag)
         each(attributes || {}, HTMLElement.prototype.setAttribute, { thisArg: elem })
         each(content,
             item => elem.appendChild(is(item, String) ? document.createTextNode(item) : item))
         return elem
     }
-    WaterLily.is = is
+    Ash.is = is
 
     function Response(data, error, xhr) {
         this.data = data
@@ -382,12 +305,12 @@ const { WaterLily, Bound, Delta } = (() => {
      * @public
      * @static
      */
-    WaterLily.ajax = (url, req) => new Bound((resolve, reject, onCancel) => {
+    Ash.ajax = (url, req) => new Bound((resolve, reject, onCancel) => {
         if (is(url))
-        if (!is(url, String)) {
-            url = req
-            url = req.url
-        }
+            if (!is(url, String)) {
+                url = req
+                url = req.url
+            }
         req = defaults(req, {
             method: 'GET',
             type: '',
@@ -405,7 +328,10 @@ const { WaterLily, Bound, Delta } = (() => {
             let namespaces = ["MSXML2.XMLHTTP.5.0", "MSXML2.XMLHTTP.4.0", "MSXML2.XMLHTTP.3.0", "MSXML2.XMLHTTP", "Microsoft.XMLHTTP"],
                 success = false
             for (let i = 0; i < namespaces.length && !success; success = xhr != undefined, i++)
-                try { xhr = new ActiveXObject(namespaces[i]) } catch (e) {}
+                try {
+                    xhr = new ActiveXObject(namespaces[i])
+                } catch (e) {
+                }
             if (!success) throw new Error("AJAX is unavailable");
         }
         onCancel(() => xhr.abort())
@@ -425,7 +351,7 @@ const { WaterLily, Bound, Delta } = (() => {
         xhr.send(req.post)
     })
 
-    WaterLily.navigator = (() => {
+    Ash.navigator = (() => {
         return {
             battery: () => new Bound((resolve, reject) => {
                 if ('battery' in navigator) resolve(navigator.battery)
@@ -448,7 +374,7 @@ const { WaterLily, Bound, Delta } = (() => {
      * @param {Boolean=} ask
      * @returns {Bound}
      */
-    WaterLily.notify = ask => new Bound((resolve, reject) => {
+    Ash.notify = ask => new Bound((resolve, reject) => {
         ask = ask || true
         if (!'Notification' in window)
             reject(new Error('The browser does not support desktop notifications'))
@@ -549,9 +475,9 @@ const { WaterLily, Bound, Delta } = (() => {
     }
 
     return {
-        WaterLily,
-        Bound,
+        Ash,
         Delta
     }
 })()
-//export {WaterLily}
+window.Ash = _ref.Ash
+window.Delta = _ref.Delta
