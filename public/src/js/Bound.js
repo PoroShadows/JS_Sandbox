@@ -519,7 +519,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined')
     module.exports = Bound
 else//noinspection JSUnresolvedVariable
 if (typeof define === 'function' && define.amd) //noinspection JSUnresolvedFunction,JSCheckFunctionSignatures
-    define([], function () {
+    define('Bound', [], function () {
         return Bound
     })
 else window.Bound = Bound

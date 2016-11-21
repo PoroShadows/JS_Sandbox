@@ -1,7 +1,7 @@
 if (typeof Object.assign != 'function') {
     (function () {
         Object.assign = function (target) {
-            'use strict';
+            'use strict'
             // We must check against these specific cases.
             if (target === undefined || target === null)
                 throw new TypeError('Cannot convert undefined or null to object')
@@ -12,9 +12,9 @@ if (typeof Object.assign != 'function') {
                     for (var nextKey in source)
                         if (source.hasOwnProperty(nextKey))
                             output[nextKey] = source[nextKey]
-            return output;
-        };
-    })();
+            return output
+        }
+    })()
 }
 var _ref = (() => {
     /**
@@ -26,7 +26,7 @@ var _ref = (() => {
      * @return {Boolean}
      * @public
      */
-    const is = (obj, primitive, strict) => {
+    function is(obj, primitive, strict) {
         return (
             obj == undefined ?
             primitive == undefined :
@@ -43,6 +43,20 @@ var _ref = (() => {
                     obj == primitive
         )
     }
+    var eachWarningShown = false
+    var PromiseA = (function () {
+        if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+            if (require('q') != null) return require('q')
+            if (require('bluebird') != null) return require('bluebird')
+            if (require('bound') != null) return require('bound')
+            if (typeof Promise != 'undefined') return Promise
+        } else {
+            var libs = ['q', 'bluebird', 'Bound', 'Promise']
+            for (var i = 0, lib = libs[i]; i < libs.length; i++, lib = libs[i])
+                if (lib in window) return window[lib]
+        }
+        return false
+    })()
     /**
      * Iterate over:
      * array,
@@ -69,27 +83,33 @@ var _ref = (() => {
      * @returns {*} The 'obj' reference
      * @public
      */
-    const each = (obj, fn, opts) => {
+    function each(obj, fn, opts) {
         if (is(obj, undefined, false) || is(fn, undefined)) return obj
         opts = defaults(opts, {
             gather: false,
             promise: false,
             runIf: true,
             returns: obj,
-            predicate: () => true,
+            predicate: function () { return true },
             thisArg: obj,
             mustOwn: true
         })
-        let idx = 0, name = '', next = {}, gather = []
+        if (opts.promise && PromiseA && !eachWarningShown) {
+            eachWarningShown = true
+            console.warn('Ash.each cannot be used as a Promise. Because the context does not support Promises and does not have access to a Promise library.')
+        }
+        var idx = 0, name = '', next = {}, gather = []
 
         if (opts.runIf) {
-            const run = (...args) => gather.push(opts.predicate(...args) ? fn.apply(opts.thisArg, args) : null)
+            function run() { return gather.push(opts.predicate.apply(null, arguments) ? fn.apply(opts.thisArg, arguments) : null) }
 
-            if (is(obj, Array) || is(obj, String)) for (; idx < obj['length']; idx++)                   run(obj[idx], idx, obj)
-            else if (is(obj, Number)) for (; idx < obj; idx++)                                          run(idx, obj)
-            else if (is(obj, Object)) if (!opts.mustOwn || opts.mustOwn && obj.hasOwnProperty(name))    run(name, obj[name], obj)
-            else if (is(obj, Boolean) && obj)                                                           run(obj)
-            else if ('Symbol' in window && is(obj, Symbol)) while (!(next = obj.next()).done)           run(next.value, next.done, obj)
+            if (is(obj, Array) || is(obj, String)) for (; idx < obj['length']; idx++) run(obj[idx], idx, obj)
+            else if (is(obj, Number)) for (; idx < obj; idx++) run(idx, obj)
+            else if (is(obj, Object)) if (!opts.mustOwn || opts.mustOwn && obj.hasOwnProperty(name)) run(name, obj[name], obj)
+            else if (is(obj, Boolean) && obj) run(obj)
+            else if ('Symbol' in window && is(obj, Symbol)) //noinspection JSUnresolvedVariable
+                while (!(next = obj.next()).done) //noinspection JSUnresolvedVariable
+                    run(next.value, next.done, obj)
 
             if (gather.filter(item => !is(item, Object)).length == 0) {
                 let temp = {}
@@ -99,7 +119,7 @@ var _ref = (() => {
             }
         }
         const ret = opts.gather ? gather : opts.returns
-        return opts.promise ? Bound.resolve(ret) : ret
+        return opts.promise ? PromiseA ? PromiseA.resolve(ret) : ret : ret
     }
     /**
      * Merge two objects
@@ -110,7 +130,7 @@ var _ref = (() => {
      * @returns {Object}
      * @public
      */
-    const mergeObjects = (first, second, override) => {
+    function mergeObjects(first, second, override) {
         for (let i = 0, keys = Object.keys(second), key = keys[i]; i < keys.length; i++, key = keys[i])
             if (!(key in first) || key in first && override)
                 first[key] = second[key]
@@ -121,7 +141,7 @@ var _ref = (() => {
      * @param {Object} actual
      * @param {Object} defaults
      */
-    const defaults = (actual, defaults) => actual == undefined ? defaults : mergeObjects(actual, defaults)
+    function defaults (actual, defaults) { return actual == undefined ? defaults : mergeObjects(actual, defaults) }
     /**
      * Define one or some properties to a object
      *
@@ -131,7 +151,7 @@ var _ref = (() => {
      * @returns {Object} A 'obj' reference
      * @public
      */
-    const defineProps = (obj, properties, desc) => {
+    function defineProps(obj, properties, desc) {
         const isDesc = obj => is(obj, Object) && ('set' in obj || 'get' in obj) && ('value' in obj || 'writable' in obj) &&
         Object.keys(obj).join('').replace(/set|get|value|writable|configurable|enumerable/g, '').length == 0
 
@@ -192,7 +212,7 @@ var _ref = (() => {
      * @param {Element...|String...|Array.<Element|String>...} [content]
      * @returns {Element|Element[]|Bound}
      */
-    const Ash = function (select, data, content) {
+    var Ash = function (select, data, content) {
         return new (function () {
             if (is(select, String))
                 return /\s+|^<.*>$/g.test(select) || is(data, null) || is(data, Object) ?
@@ -229,7 +249,7 @@ var _ref = (() => {
      * @public
      * @static
      */
-    Ash.find = (selector, context) => {
+    Ash.find = function (selector, context) {
         context = is(context, Element) ? context : is(context, String) ? Ash.find(context) : document
         const list = context.querySelectorAll(selector)
         return list.length > 1 ? list : list.length == 1 ? list[0] : undefined
