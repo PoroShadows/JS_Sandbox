@@ -3,7 +3,8 @@
 
 Index
 - [Comments](#comments)
-- [Functions](#numbersandstrings)
+- [Variable](#variable)
+- [Numbers and Strings](#numbers-and-strings)
 - [Functions](#function)
 
 ### Comments
@@ -19,39 +20,36 @@ Variable
 name
 ```
 
-Number and Strings
+Variables, Numbers, Strings, Arrays and Objects
 ---
 
 String interpolation is done like this "${token}"
 
 ```
-name = 0
-name = ''
-name = ""
+// undefined mutable variable
+heyAVariable
 
+// assigning a number
+number = 0
+
+// this is the same 
+singleQuoteString = ''
+// as this
+doubleQuoteString = ""
+
+// String interpolation
 name = "${name}"
 name = '${name}'
-```
 
-Array
----
-Can omit brackets
-
-```
+// array assigment
 name = [item1, item2, ..., itemN]
-name = item1, item2, ..., itemN
-```
 
-Object
----
-Can omit braces (not when empty) and commas
-
-```
+// object assigment
 name = {}
 name = { name: value }
 name = { n1: v1, n2: v2 }
 
-test = 3
+test -> 3
 
 name = { test hi: 'hi there' }
 ```
