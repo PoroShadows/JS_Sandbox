@@ -103,7 +103,7 @@ function add(x, y) {
     return x + y;
 }
 function run(fun) {
-    fun.apply(arguments);
+    fun.apply(null, arguments);
 }
 function* count() {
     // 0xff = 256
