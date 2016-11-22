@@ -82,8 +82,9 @@ Function body values:
 | arguments      | Array  | An array of argument values                                     |
 | namedArguments | Object | The key is the argument name and the value is what value it has |
 
-Use the yield keyword inside function body and make the function a generator 
-Use the await keyword inside function body and make the function asynchronous 
+Keywords:
+- `yield` makes the function a generator
+- `await` makes the function asynchronous 
 
 #### Examples
 
@@ -92,7 +93,7 @@ add x y -> x + y
 
 run fun :-> fun(...arguments.slice(1))
 
-count :*-> for i = 1; i < 0xff; i++: yield i
+count :-> for i = 1; i < 0xff; i++: yield i
 
 addAll -> arguments.reduce(total num -> total += num, 0)
 ```
@@ -203,7 +204,7 @@ hw :-> console.log("Hello world")
 doubleMe x -> x * 2
 doubleUs x = 0 y = 0 -> doubleMe x + doubleMe y
 doubleLowNumber num -> if num >= 100: num else num * 2
-count *-> for num = 1; num <= 10; num++: yield num // Generator
+count -> for num = 1; num <= 10; num++: yield num // Generator
 
 counter -> count()
 
@@ -215,8 +216,6 @@ doubleLowNumber(150) // 150
 counter.next() // 1
 counter.next() // 2
 doubleMe() // Syntax Error: Parameters cannot be null or undefined
-
-
 ```
 
 [0]: #comments "Comments"
