@@ -2,28 +2,24 @@
 (Description)
 
 Index
-- [Comments](#comments)
-- [Variable](#variable)
-- [Numbers and Strings](#numbers-and-strings)
-- [Functions](#function)
+- [Comments][0]
+- [Fields][1]
+- [Functions][2]
 
 ### Comments
 ```
 // End of line comment
-/* Block comment */
+/* 
+Block comment 
+*/
 ```
 
-Variable
+Fields
 ---
 
-```
-name
-```
+Variables, Numbers, Strings, Arrays, Objects and Constants.
 
-Variables, Numbers, Strings, Arrays and Objects
----
-
-String interpolation is done like this "${token}"
+String interpolation is done like this "${token}".
 
 ```
 // undefined mutable variable
@@ -46,12 +42,18 @@ name = [item1, item2, ..., itemN]
 
 // object assigment
 name = {}
-name = { name: value }
+
+v1 = 2
+v2 = 6
+
 name = { n1: v1, n2: v2 }
 
-test -> 3
+test = 3
 
-name = { test hi: 'hi there' }
+name = { test, hi: 'hi there' }
+
+// Constants 
+constantField -> "some"
 ```
 Function
 ---
@@ -82,12 +84,18 @@ Function body values:
 | arguments      | Array  | An array of argument values                                     |
 | namedArguments | Object | The key is the argument name and the value is what value it has |
 
+Use the await keyword inside function body  and make the function asynchronous 
+
 #### Examples
 
 ```
 add x y -> x + y
+
 run fun :-> fun(...arguments.slice(1))
+
 count :*-> for i = 1; i < 0xff; i++: yield i
+
+addAll -> arguments.reduce(total num -> total += num, 0)
 ```
 In js 
 ```js
@@ -95,13 +103,18 @@ function add(x, y) {
     return x + y;
 }
 function run(fun) {
-    fun();
+    fun.apply(arguments);
 }
 function* count() {
     // 0xff = 256
     for (let i = 0; i < 0xff; i++) {
         yield i;
     }
+}
+function addAll() {
+    return Array.prototype.reduce.call(arguments, function(total, num) {
+        return total += num;
+    }, 0);
 }
 ```
 
@@ -203,4 +216,10 @@ doubleLowNumber(150) // 150
 counter.next() // 1
 counter.next() // 2
 doubleMe() // Syntax Error: Parameters cannot be null or undefined
+
+
 ```
+
+[0]: #comments "Comments"
+[1]: #fields "Fields"
+[2]: #function "Functions"
