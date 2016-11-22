@@ -67,8 +67,6 @@ Declaration modifiers:
 |  =   | (... => ...)   | Gets the parents scope                                          |
 |  :   | (... :-> ...)  | Does not return if expression                                   |
 |  :=  | (... :=> ...)  | Gets the parents scope and does not return if it is a expression|
-|  *   | (... *-> ...)  | Makes it a generator function                                   |
-|  :*  | (... :*-> ...) | Makes a generator that does not return                          |
 
 Parameters can:
 
@@ -84,7 +82,8 @@ Function body values:
 | arguments      | Array  | An array of argument values                                     |
 | namedArguments | Object | The key is the argument name and the value is what value it has |
 
-Use the await keyword inside function body  and make the function asynchronous 
+Use the yield keyword inside function body and make the function a generator 
+Use the await keyword inside function body and make the function asynchronous 
 
 #### Examples
 
