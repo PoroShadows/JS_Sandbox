@@ -53,7 +53,7 @@ test = 3
 name = { test, hi: 'hi there' }
 
 // Constants 
-constantField -> "some"
+constantField <- "some"
 ```
 Function
 ---
